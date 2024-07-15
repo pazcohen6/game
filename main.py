@@ -1,15 +1,17 @@
 import tcod
-from actions import EscapeAction, MovementAction
+
 from input_handlers import EventHandler
+from entity import Entity
+from engine import Engine
+from game_map import GameMap
 
 def main() -> None:
     #screan size is * 16 pixels in cmd chars
-    screan_witdth = 80
-    screan_hight = 50
-    
-    #inisialist the player location on the screan
-    player_x = int(screan_witdth / 2)
-    player_y = int(screan_hight / 2)
+    screan_width = 140
+    screan_hight = 100
+
+    map_width = 140
+    map_hight = 95
 
     #load the img file we will use
     tileset = tcod.tileset.load_tilesheet(
@@ -18,39 +20,34 @@ def main() -> None:
 
     event_handler = EventHandler()
 
+    player = Entity(int(screan_width / 2), int(screan_hight / 2), '@', (255,255,255))
+    npc = Entity(int(screan_width / 2 - 5), int(screan_hight / 2), '@', (255,255,0))
+    entities = {player, npc}
+
+    game_map = GameMap(map_width, map_hight)
+    
+    engine = Engine(entities=entities, event_handler=event_handler, game_map=game_map ,player=player)
     #creating the screan
     with tcod.context.new_terminal(
-        screan_witdth,
+        screan_width,
         screan_hight,
         tileset=tileset,
         title='Yet Another Roguelike Tutorial',
         vsync=True,
     ) as context:
         #creates our “console” which is what we’ll be drawing to
-        root_console = tcod.Console(screan_witdth, screan_hight, order='F')
+        root_console = tcod.Console(screan_width, screan_hight, order='F')
         
         #game loop
         while True:
             #draw '@' in location x,y (x=0,y=0 is the top  left corner)
-            root_console.print(x=player_x,y=player_y, string='@')
+            engine.render(console=root_console, context=context)
 
             #updates the screen display.
-            context.present(root_console)
-            root_console.clear()
-            #gives us a way to exit
-            for event in tcod.event.wait():
-                action = event_handler.dispatch(event)
+            events = tcod.event.wait()
 
-                if action is None:
-                    continue
-                
-                if isinstance(action, MovementAction):
-                    player_x += action.dx
-                    player_y += action.dy
-                
-                elif isinstance(action,EscapeAction):
-                    raise SystemExit()
-
+            engine.handle_events(events)
+            
 
 if __name__ == "__main__":
     main()
