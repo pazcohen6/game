@@ -4,9 +4,9 @@ import numpy as np
 
 graphic_dt = np.dtype(
     [
-        ("ch",np.int32), #unicode codepoint
-        ("fg","3B"), #3 unsighned pytes for RGB colors
-        ("bg","3B"),
+        ("ch",np.int32), # Unicode codepoint
+        ("fg","3B"), # The foreground color as an RGB tuple (3 unsigned bytes).
+        ("bg","3B"), # The background color as an RGB tuple (3 unsigned bytes).
     ]
 )
 
@@ -28,8 +28,8 @@ def new_tile(
     return np.array((walkable,transparent,dark), dtype=tile_dt)
 
 floor = new_tile(
-    walkable=True, transparent=True, dark=(ord(" "),(255,255,255), (78,150,50)),
+    walkable=True, transparent=True, dark=(ord(" "),(255,255,255), (41,91,255)),
 )
 wall = new_tile(
-    walkable=False, transparent=False, dark=(ord("#"), (102,51,0), (130,82,1)),
+    walkable=False, transparent=False, dark=(ord("#"), (0,0,200), (0,0,200)),
 )
