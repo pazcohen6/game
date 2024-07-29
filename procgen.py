@@ -2,11 +2,12 @@ from typing import Iterator, Tuple, List, TYPE_CHECKING
 import random
 import tcod
 
+import entity_factories
 from game_map import GameMap
 import tile_types
 
 if TYPE_CHECKING:
-    from entity import Entity
+    from engine import Engine
 
 """
 RectangularRoom class
@@ -80,6 +81,22 @@ def tunnle_between(
     for x,y in tcod.los.bresenham((corner_x,corner_y), (x2,y2)).tolist():
         yield x,y
 
+def place_entities(
+        room:RectangularRoom, dungeon:GameMap, max_monster:int
+) -> None:
+    number_of_monsters = random.randint(0, max_monster)
+
+    for i in range(number_of_monsters):
+        x = random.randint(room.x1 + 1, room.x2 - 1)
+        y = random.randint(room.y1 + 1, room.y2 - 1)
+
+        if not any(entity.x ==x and entity.y==y for entity in dungeon.entities):
+            if random.random() < 0.8:
+                entity_factories.orc.spawn(dungeon, x, y)
+            else:
+                entity_factories.troll.spawn(dungeon, x, y)
+
+
 """
 generate_dungeon : generat a dungeon with rooms randomly scattered on the map
                    and path's between the rooms
@@ -98,10 +115,12 @@ def generate_dungeon(
         room_max_size:int,
         map_width:int,
         map_height:int,
-        player:'Entity'
+        max_monster_per_room: int,
+        engine: 'Engine',
     ) -> GameMap:
     
-    dungeon = GameMap(map_width, map_height)
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
 
@@ -120,12 +139,14 @@ def generate_dungeon(
         dungeon.tiles[new_room.inner] = tile_types.floor
 
         if len(rooms) == 0:
-            player.x, player.y = new_room.center
+            player.place(*new_room.center, dungeon)
 
         else:
             for x,y in tunnle_between(rooms[-1].center, new_room.center):
                 dungeon.tiles[x,y] = tile_types.floor
-        print(new_room.x1,new_room.x2,new_room.y1,new_room.y2, new_room.inner, sep='\t')
+        
+        place_entities(new_room,dungeon,max_monster_per_room)
+
         rooms.append(new_room)
 
     return dungeon

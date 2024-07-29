@@ -1,7 +1,7 @@
 import tcod
+import copy
 
-from input_handlers import EventHandler
-from entity import Entity
+import entity_factories
 from engine import Engine
 from procgen import generate_dungeon
 
@@ -18,33 +18,32 @@ def main() -> None:
     room_max_size = 10
     room_min_size = 6
     max_rooms = 30
-
+    max_monster_per_room = 3
     #load the img file we will use
     tileset = tcod.tileset.load_tilesheet(
         "image.png",32,8,tcod.tileset.CHARMAP_TCOD
     )
 
-    event_handler = EventHandler()
+    player = copy.deepcopy(entity_factories.player)
 
-    player = Entity(int(screan_width / 2), int(screan_height / 2), '@', (255,255,255))
-    npc = Entity(int(screan_width / 2 - 5), int(screan_height / 2), '@', (255,255,0))
-    entities = {player, npc}
-
-    game_map = generate_dungeon(
-        max_rooms,
-        room_min_size,
-        room_max_size,
-        map_width,
-        map_height,
-        player)
+    engine = Engine(player=player)
+    engine.game_map = generate_dungeon(
+        max_rooms = max_rooms,
+        room_min_size = room_min_size,
+        room_max_size = room_max_size,
+        map_width = map_width,
+        map_height = map_height,
+        max_monster_per_room = max_monster_per_room,
+        engine=engine)
     
-    engine = Engine(entities=entities, event_handler=event_handler, game_map=game_map ,player=player)
+    engine.update_fov()
+
     #creating the screan
     with tcod.context.new_terminal(
         screan_width,
         screan_height,
         tileset=tileset,
-        title='Yet Another Roguelike Tutorial',
+        title='Yet Another Roguelike Game',
         vsync=True,
     ) as context:
         #creates our “console” which is what we’ll be drawing to
@@ -56,9 +55,7 @@ def main() -> None:
             engine.render(console=root_console, context=context)
 
             #updates the screen display.
-            events = tcod.event.wait()
-
-            engine.handle_events(events)
+            engine.event_handler.handle_events()
             
 
 if __name__ == "__main__":
