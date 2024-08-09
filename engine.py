@@ -6,11 +6,14 @@ from tcod.context import Context
 from tcod.console import Console
 from tcod.map import compute_fov
 
-from input_handlers import EventHandler
+from input_handlers import MainGameEventHandler
+from message_log import MessageLog
+from render_functions import render_bar
 
 if TYPE_CHECKING:
-    from entity import Entity
+    from entity import Actor
     from game_map import GameMap
+    from input_handlers import EventHandler
 
 """
 Engine
@@ -20,11 +23,12 @@ Methods : TODO
 class Engine:
     game_map: GameMap
 
-    def __init__(self, player: Entity):
-        self.event_handler: EventHandler = EventHandler(self)
+    def __init__(self, player: Actor):
+        self.event_handler: EventHandler = MainGameEventHandler(self)
+        self.message_log = MessageLog()
         self.player = player
         
-    def handle_enemy_turn(self) -> None:
+    def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
             if entity.ai:
                 entity.ai.perform()
@@ -41,6 +45,14 @@ class Engine:
 
     def render(self, console: Console, context: Context) -> None:
         self.game_map.render(console)
+
+        self.message_log.render(console=console, x= 21, y= 53, width= 50 ,height= 5)
+        render_bar(
+            console= console,
+            current_value= self.player.fighter.hp,
+            maximum_value= self.player.fighter.max_hp,
+            total_width= 20,
+        )
 
         context.present(console)
 
