@@ -18,8 +18,8 @@ class Action:
         """Return the engien this action belong to."""
         return self.entity.gamemap.engine
     
-    def preform(self) -> None:
-        """Perform this action with the objects needed to determine its scope.
+    def perform(self) -> None:
+        """perform this action with the objects needed to determine its scope.
         `self.engine` is the scope this action is being performed in.
         `self.entity` is the object performing the action.
         This method must be overridden by Action subclasses.
@@ -29,8 +29,13 @@ class Action:
 # Define a subclass for escape action.
 # TODO
 class EscapeAction(Action):
-    def preform(selfy) -> None:
+    def perform(selfy) -> None:
         raise SystemExit()
+    
+# TODO
+class WaitAction(Action):
+    def perform(self) -> None:
+        pass
 
 # TODO
 class ActionWithDirection(Action):
@@ -48,12 +53,12 @@ class ActionWithDirection(Action):
     def blocking_entity(self) -> None:
         return self.engine.game_map.get_blocking_ntity_at_location(*self.dest_xy)
     
-    def preform(self) -> None:
+    def perform(self) -> None:
         raise NotImplementedError()
 
 # TODO
 class MeleeAction(ActionWithDirection):
-    def preform(self) -> None:
+    def perform(self) -> None:
         target = self.blocking_entity
         if not target:
             return # No entity to attack.
@@ -64,7 +69,7 @@ class MeleeAction(ActionWithDirection):
 # TODO
 class MovementAction(ActionWithDirection):
 
-    def preform(self) -> None:
+    def perform(self) -> None:
         dest_x, dest_y = self.dest_xy
          
 
@@ -78,11 +83,11 @@ class MovementAction(ActionWithDirection):
 
 # TODO
 class BumpAction(ActionWithDirection):
-    def preform(self) -> None:
+    def perform(self) -> None:
 
         if self.blocking_entity:
-            return MeleeAction(self.entity, self.dx, self.dy).preform()
+            return MeleeAction(self.entity, self.dx, self.dy).perform()
         
         else:
-            return MovementAction(self.entity ,self.dx, self.dy).preform()
+            return MovementAction(self.entity ,self.dx, self.dy).perform()
                 

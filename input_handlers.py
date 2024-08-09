@@ -22,7 +22,7 @@ class EventHandler(tcod.event.EventDispatch[Action]):
             if action is None:
                 continue
             
-            action.preform()
+            action.perform()
 
             self.engine.handle_enemy_turn()
             self.engine.update_fov()
