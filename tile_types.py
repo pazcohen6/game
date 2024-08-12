@@ -19,7 +19,21 @@ tile_dt = np.dtype(
     ]
 )
 
-#function to defining individual tile type
+"""
+new_tile function:
+    Creates a new tile with the specified properties.
+
+    Parameters:
+        walkable (int): Whether the tile is walkable.
+        transparent (int): Whether the tile is transparent.
+        dark (Tuple[int, Tuple[int, int, int], Tuple[int, int, int]]):
+            Graphics for when the tile is not in FOV.
+        light (Tuple[int, Tuple[int, int, int], Tuple[int, int, int]]):
+            Graphics for when the tile is in FOV.
+
+    Return:
+        > np.ndarray: A numpy array representing the tile with the specified properties.
+"""
 def new_tile(
     *, # Enforce the use of keywords, so that parameter order doesn't matter.
     walkable: int,
@@ -29,10 +43,10 @@ def new_tile(
 ) -> np.ndarray:
     return np.array((walkable,transparent,dark,light), dtype=tile_dt)
 
-# represent unexplored, unseen tiles
+# Represent unexplored, unseen tiles
 SHROUD = np.array((ord(" "), (255,255,255), (0,0,0)), dtype=graphic_dt)
 
-
+#  Represents a floor tile in the game. It is walkable and transparent,
 floor = new_tile(
     walkable=True,
     transparent=True,
@@ -40,6 +54,7 @@ floor = new_tile(
     light=(ord(" "),(255,255,255), (200,180,50))
 )
 
+# Represents a wall tile in the game. It is not walkable and not transparent,
 wall = new_tile(
     walkable=False,
     transparent=False,

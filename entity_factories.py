@@ -2,6 +2,11 @@ from components.ai import HostileEnemy
 from components.fighter import Fighter
 from entity import Actor
 
+"""
+Actor instances for the game.
+
+The following actors are defined: the player and two types of enemies .
+"""
 player = Actor(
    char="@",
    color=(255, 255, 255),

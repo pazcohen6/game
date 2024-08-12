@@ -1,3 +1,8 @@
+"""
+Color definitions for use in the game.
+
+Colors are represented as tuples of RGB values.
+"""
 white = (0xFF, 0xFF, 0xFF)
 black = (0x0, 0x0, 0x0)
 

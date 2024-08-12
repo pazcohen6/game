@@ -8,8 +8,31 @@ if TYPE_CHECKING:
     from entity import Actor, Entity
 
 
-# Define a base class for all actions
-# TODO
+"""
+Action class:
+    A base class for all actions that can be performed by entities in the game.
+    Actions represent different behaviors or interactions, such as moving, attacking,
+    or waiting.
+
+Attributes:
+    entity (Actor):
+        The entity that performs the action.
+
+Methods:
+    engine (property):
+        Returns the game engine associated with the entity performing the action.
+        This allows actions to interact with the game world.
+
+        Return:
+            > Engine: The game engine this action belongs to.
+
+    perform:
+        Executes the action. This method must be overridden by subclasses to define
+        specific behaviors for different actions.
+
+        Raise:
+            > NotImplementedError: If the method is not overridden in a subclass.
+"""
 class Action:
     def __init__(self, entity: Actor) -> None:
         super().__init__()
@@ -28,18 +51,65 @@ class Action:
         """
         raise NotImplementedError()
 
-# Define a subclass for escape action.
-# TODO
+"""
+EscapeAction class (inherits from Action):
+    An action that causes the player to exit the game.
+
+Methods:
+    perform:
+        Raises a SystemExit exception to exit the game.
+
+        Raise:
+            > SystemExit: Terminates the game.
+"""
 class EscapeAction(Action):
     def perform(selfy) -> None:
         raise SystemExit()
     
-# TODO
+"""
+WaitAction class (inherits from Action):
+    An action that causes the entity to do nothing for a turn.
+
+Methods:
+    perform:
+        Performs no operation, effectively causing the entity to wait.
+"""
 class WaitAction(Action):
     def perform(self) -> None:
         pass
 
-# TODO
+"""
+ActionWithDirection class (inherits from Action):
+    A base class for actions that require a direction, such as movement or attacking.
+    This class provides properties to determine the destination coordinates and
+    to check for entities at the destination.
+
+Attributes:
+    dx (int):
+        The change in the x-coordinate for the action.
+    dy (int):
+        The change in the y-coordinate for the action.
+
+Methods:
+    dest_xy (property):
+        Calculates and returns the destination coordinates based on the entity's
+        current position and the direction of the action.
+
+        Return:
+            > Tuple[int, int]: The (x, y) coordinates of the destination.
+
+    blocking_entity (property):
+        Checks if there is a blocking entity at the destination.
+
+        Return:
+            > None: Currently does not return an entity, but checks for blocking.
+
+    target_actor (property):
+        Checks if there is an actor (entity) at the destination.
+
+        Return:
+            > Optional[Actor]: The actor at the destination, if any.
+"""
 class ActionWithDirection(Action):
     def __init__(self, entity: Actor, dx: int, dy: int):
         super().__init__(entity)
@@ -60,7 +130,19 @@ class ActionWithDirection(Action):
     def perform(self) -> None:
         raise NotImplementedError()
 
-# TODO
+"""
+MeleeAction class (inherits from ActionWithDirection):
+    An action that causes the entity to perform a melee attack on a target actor.
+
+Methods:
+    perform:
+        Executes the melee attack. If a target is present, calculates the damage
+        based on the entity's power and the target's defense. Logs the attack
+        message and applies damage if any.
+
+        Return:
+            > None
+"""
 class MeleeAction(ActionWithDirection):
     def perform(self) -> None:
         target = self.target_actor
@@ -84,8 +166,18 @@ class MeleeAction(ActionWithDirection):
                 f'{attack_desc} but does no damage', attack_color
             )
 
-# Define a subclass for movement action, with includes info about movement direction
-# TODO
+"""
+MovementAction class (inherits from ActionWithDirection):
+    An action that moves the entity to a new position if the destination is valid.
+
+Methods:
+    perform:
+        Moves the entity in the specified direction if the destination is within
+        bounds, walkable, and not blocked by another entity.
+
+        Return:
+            > None
+"""
 class MovementAction(ActionWithDirection):
 
     def perform(self) -> None:
@@ -100,7 +192,19 @@ class MovementAction(ActionWithDirection):
             return # Destination is block by an entity.
         self.entity.move(self.dx, self.dy)
 
-# TODO
+"""
+BumpAction class (inherits from ActionWithDirection):
+    An action that performs either a melee attack or a movement, depending on
+    whether there is a target actor at the destination.
+
+Methods:
+    perform:
+        Checks for a target actor at the destination. If found, performs a melee
+        attack. Otherwise, performs a movement action.
+
+        Return:
+            > None
+"""
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
 

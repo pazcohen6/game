@@ -10,26 +10,40 @@ if TYPE_CHECKING:
     from engine import Engine
 
 """
-RectangularRoom class
+RectangularRoom class:
+    This class defines a rectangular room in a dungeon.
 
-Methods : 
-    __init__ : initialize a rectangular room starting at (x,y) cordinate and with width and height
-    Input :
-        > x - int number for x cordinate
-        > y - int number for y cordinate
-        > width - int number for the room width
-        > height = int number for th room height
+Methods:
+    __init__:
+        Initializes a rectangular room starting at (x, y) coordinates with
+        the specified width and height.
 
-    center : method to finde the center of the room
-        Return : cordinate (x,y) that represent the senter of the room
+        Input:
+            > x (int): The x-coordinate of the room's starting position.
+            > y (int): The y-coordinate of the room's starting position.
+            > width (int): The width of the room.
+            > height (int): The height of the room.
 
-    inner : slice the first row and column of the room to prevent non-intresects larger rooms
-        Return : the sliced room
+    center:
+        Calculates and returns the center coordinates of the room.
 
-    intrsects : chack if this room is overlap with other room
-        Input : 
-            > other - other room to chack if intersects
-        Return : True if this room intersect with the other
+        Return:
+            > Tuple[int, int]: A tuple representing the (x, y) coordinates of the room's center.
+
+    inner:
+        Returns a slice of the room's inner area, excluding the outer walls.
+
+        Return:
+            > Tuple[slice, slice]: Slices representing the inner area of the room.
+
+    intersects:
+        Checks if this room intersects with another room.
+
+        Input:
+            > other (RectangularRoom): Another room to check for intersection.
+
+        Return:
+            > bool: True if this room intersects with the other room, False otherwise.
 """
 class RectangularRoom:
     def __init__(self, x:int, y:int, width:int, height:int) :
@@ -54,15 +68,18 @@ class RectangularRoom:
                 and self.x2 >= other.x1 
                 and self.y1 <= other.y2 
                 and self.y2 >= other.y1)
-        
+
 """
-tunnle_between: method to create a tunnle between two points
-                useing Bresenham line to find a path between to points
-    Input :
-        > start : the starting point
-        > end : the ending point
-    Yield : a series of x,y values with and end resulf of 'L' shpe path between the points
-"""
+tunnel_between function:
+    Creates an 'L'-shaped tunnel between two points using Bresenham's line algorithm.
+
+    Input:
+        > start (Tuple[int, int]): The starting point of the tunnel.
+        > end (Tuple[int, int]): The ending point of the tunnel.
+
+    Yield:
+        > Iterator[Tuple[int, int]]: A series of (x, y) coordinates representing the tunnel.
+"""        
 def tunnle_between(
         start: Tuple[int,int], end: Tuple[int,int]
 ) -> Iterator[Tuple[int,int]]:
@@ -81,6 +98,18 @@ def tunnle_between(
     for x,y in tcod.los.bresenham((corner_x,corner_y), (x2,y2)).tolist():
         yield x,y
 
+"""
+place_entities function:
+    Places a random number of monsters in a given room within the dungeon.
+
+    Input:
+        > room (RectangularRoom): The room in which to place the monsters.
+        > dungeon (GameMap): The game map where the room is located.
+        > max_monster (int): The maximum number of monsters to place in the room.
+
+    Return:
+        > None
+"""
 def place_entities(
         room:RectangularRoom, dungeon:GameMap, max_monster:int
 ) -> None:
@@ -96,18 +125,22 @@ def place_entities(
             else:
                 entity_factories.troll.spawn(dungeon, x, y)
 
-
 """
-generate_dungeon : generat a dungeon with rooms randomly scattered on the map
-                   and path's between the rooms
-    Input :
-        > max_rooms - number of maximum  rooms to generate
-        > room_min_size - minimum width / height of a room
-        > room_max_size - maximum width / height of a room
-        > map_width - the map width
-        > map_height - the map height
-        > player - to place at the first generated room center as a starting position
-    Output : dungen map with the player in the first generted room
+generate_dungeon function:
+    Generates a dungeon map with randomly scattered rooms connected by tunnels.
+    Places the player in the first generated room and populates the rooms with monsters.
+
+    Input:
+        > max_rooms (int): The maximum number of rooms to generate.
+        > room_min_size (int): The minimum width/height of a room.
+        > room_max_size (int): The maximum width/height of a room.
+        > map_width (int): The width of the dungeon map.
+        > map_height (int): The height of the dungeon map.
+        > max_monster_per_room (int): The maximum number of monsters per room.
+        > engine (Engine): The game engine, including the player entity.
+
+    Return:
+        > GameMap: The generated dungeon map with rooms, tunnels, and entities.
 """
 def generate_dungeon(
         max_rooms:int,

@@ -12,8 +12,78 @@ if TYPE_CHECKING:
     from entity import Entity
 
 """
-GameMap class that represent the game map
-Method : TODO
+GameMap class:
+    Represents the game map, including the tiles and entities present on it.
+    Handles map rendering, entity management, and tile visibility.
+
+Attributes:
+    engine (Engine):
+        The engine instance controlling the game. Used for interacting with the game state.
+    width (int):
+        The width of the game map in tiles.
+    height (int):
+        The height of the game map in tiles.
+    entities (set[Entity]):
+        A set of entities present on the map.
+    tiles (np.ndarray):
+        A 2D array representing the map's tiles. Initialized to wall tiles by default.
+    visible (np.ndarray):
+        A 2D array indicating which tiles are currently visible.
+    explored (np.ndarray):
+        A 2D array indicating which tiles have been explored.
+
+Methods:
+    __init__:
+        Initializes a new game map with the given dimensions and optionally with
+        initial entities.
+
+        Parameters:
+            engine (Engine): The engine instance controlling the game.
+            width (int): The width of the map.
+            height (int): The height of the map.
+            entities (Iterable[Entity]): Initial entities to place on the map.
+
+    actors (Iterator[Actor]):
+        Iterates over living actors on the map.
+        
+        Yields:
+            Actor: Each living actor on the map.
+
+    get_blocking_ntity_at_location:
+        Retrieves an entity at a specific location that blocks movement.
+
+        Parameters:
+            location_x (int): The x-coordinate of the location.
+            location_y (int): The y-coordinate of the location.
+
+        Returns:
+            Optional[Entity]: The blocking entity, or None if no entity blocks the location.
+
+    get_actor_at_location:
+        Retrieves an actor at a specific location.
+
+        Parameters:
+            x (int): The x-coordinate of the location.
+            y (int): The y-coordinate of the location.
+
+        Returns:
+            Optional[Actor]: The actor at the location, or None if no actor is present.
+
+    in_bounds:
+        Checks if a location is within the map's bounds.
+
+        Parameters:
+            x (int): The x-coordinate to check.
+            y (int): The y-coordinate to check.
+
+        Returns:
+            bool: True if the location is within bounds, False otherwise.
+
+    render:
+        Renders the map to the console, displaying tiles and entities.
+
+        Parameters:
+            console (Console): The console instance to render to.
 """
 class GameMap:
     def __init__(self, engine: Engine, width:int, height:int, entities: Iterable[Entity] = ()):

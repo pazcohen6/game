@@ -56,11 +56,11 @@ def main() -> None:
         
         #game loop
         while True:
-            #draw '@' in location x,y (x=0,y=0 is the top  left corner)
-            engine.render(console=root_console, context=context)
+            root_console.clear()
+            engine.event_handler.on_render(console = root_console)
+            context.present(root_console)
 
-            #updates the screen display.
-            engine.event_handler.handle_events()
+            engine.event_handler.handle_events(context)
             
 
 if __name__ == "__main__":

@@ -11,6 +11,30 @@ from components.base_component import BaseComponent
 if TYPE_CHECKING:
     from entity import Actor
 
+"""
+BaseAI class:
+    An abstract class that provides basic AI functionality for entities.
+    Inherits from both Action and BaseComponent, enabling AI-controlled actions
+    and interaction with the game's component system.
+
+Methods:
+    perform:
+        An abstract method meant to be overridden by subclasses to define
+        specific AI behavior.
+    
+    get_path_to:
+        Computes and returns a path to a target position using a pathfinding
+        algorithm. The path avoids obstacles and accounts for other entities
+        blocking movement.
+
+        Input:
+            > dest_x (int): The x-coordinate of the target position.
+            > dest_y (int): The y-coordinate of the target position.
+
+        Return:
+            > List[Tuple[int, int]]: A list of (x, y) tuples representing the path
+              to the target position. Returns an empty list if no valid path is found.
+"""
 class BaseAI(Action, BaseComponent):
     entity: Action
 
@@ -45,7 +69,29 @@ class BaseAI(Action, BaseComponent):
 
         # Convert from List[List[int]] to List[Tuple[int, int]].
         return [(index[0], index[1]) for index in path]
+
+"""
+HostileEnemy class:
+    A subclass of BaseAI representing an enemy AI that will actively seek out
+    and attack the player. The enemy will move towards the player if not in
+    melee range, or attack if close enough.
+
+Methods:
+    __init__:
+        Initializes the HostileEnemy with the given entity and sets up an
+        empty path list for movement.
+
+        Input:
+            > entity (Actor): The entity controlled by this AI.
     
+    perform:
+        Executes the AI's decision-making process each turn. If the player is
+        visible, the enemy will either move towards the player or attack if
+        within melee range. If no valid move is available, the enemy will wait.
+
+        Return:
+            > None
+"""
 class HostileEnemy(BaseAI):
    def __init__(self, entity: Actor):
        super().__init__(entity)
