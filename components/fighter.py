@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 
 import color
 from components.base_component import BaseComponent
-from input_handlers import GameOverEventHandler
 from render_order import RendrOrder
 
 if TYPE_CHECKING:
@@ -16,7 +15,7 @@ Fighter class:
     death, and interactions related to combat.
 
 Attributes:
-    entity (Actor):
+    parent (Actor):
         The entity instance that owns this component.
     max_hp (int):
         The maximum health points for the entity.
@@ -43,9 +42,12 @@ Methods:
 
         Return:
             > None
+
+    heal: TODO
+    take_damage: TODO
 """
 class Fighter(BaseComponent):
-    entity: Actor
+    parent: Actor
 
     def __init__(self, hp: int, defense: int, power: int):
         self.max_hp = hp
@@ -61,24 +63,39 @@ class Fighter(BaseComponent):
     def hp(self, value: int) -> None:
         self._hp = max(0, min(value, self.max_hp))
 
-        if self._hp == 0 and self.entity.ai:
+        if self._hp == 0 and self.parent.ai:
             self.die()
 
     def die(self) -> None:
-        if self.engine.player is self.entity:
+        if self.engine.player is self.parent:
             death_massage = "You Died"
             death_massage_color = color.player_die
-            self.engine.event_handler = GameOverEventHandler(self.engine)
-
         else:
-            death_massage = f"you've defeated {self.entity.name}"
+            death_massage = f"you've defeated {self.parent.name}"
             death_massage_color = color.enemy_die
 
-        self.entity.char = "%"
-        self.entity.color = (191,0,0)
-        self.entity.blocks_movement = False
-        self.entity.ai = None
-        self.entity.name = f"remains of {self.entity.name}"
-        self.entity.render_order = RendrOrder.CORPSE
+        self.parent.char = "%"
+        self.parent.color = (191,0,0)
+        self.parent.blocks_movement = False
+        self.parent.ai = None
+        self.parent.name = f"remains of {self.parent.name}"
+        self.parent.render_order = RendrOrder.CORPSE
 
-        self.engine.message_log.add_messge(death_massage, death_massage_color)
+        self.engine.message_log.add_message(death_massage, death_massage_color)
+
+    def heal(self, amount: int) -> int:
+        if self.hp == self.max_hp:
+            return 0
+        
+        new_hp_value = self.hp + amount
+
+        if new_hp_value > self.max_hp:
+            new_hp_value = self.max_hp
+        
+        amount_recovered =  new_hp_value - self.hp
+        
+        self.hp = new_hp_value
+        return amount_recovered
+    
+    def take_damage(self, amount: int) -> None:
+        self.hp -= amount

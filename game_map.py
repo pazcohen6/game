@@ -4,7 +4,7 @@ from typing import Iterable, Iterator, Optional, TYPE_CHECKING
 import numpy as np
 from tcod.console import Console
 
-from entity import Actor
+from entity import Actor, Item
 import tile_types
 
 if TYPE_CHECKING:
@@ -43,11 +43,15 @@ Methods:
             height (int): The height of the map.
             entities (Iterable[Entity]): Initial entities to place on the map.
 
+    gamemap: TODO
+
     actors (Iterator[Actor]):
         Iterates over living actors on the map.
         
         Yields:
             Actor: Each living actor on the map.
+    
+    items : TODO
 
     get_blocking_ntity_at_location:
         Retrieves an entity at a specific location that blocks movement.
@@ -99,6 +103,9 @@ class GameMap:
         self.explored = np.full((width, height), fill_value = False, order='F')
 
     @property
+    def gamemap(self) -> GameMap:
+        return self
+    @property
     def actors(self) -> Iterator[Actor]:
         """Iterate over this maps living actors."""
         yield from (
@@ -106,6 +113,10 @@ class GameMap:
             for entity in self.entities
             if isinstance(entity, Actor) and entity.is_alive
         )
+
+    @property
+    def items(self) -> Iterator[Item]:
+        yield from (entity for entity in self.entities if isinstance(entity, Item))
 
     def get_blocking_ntity_at_location(self, location_x : int, location_y : int) ->Optional[Entity]:
         

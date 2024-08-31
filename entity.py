@@ -1,13 +1,16 @@
-
 from __future__ import annotations
 import copy
-from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING
+import math
+from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 
+#from game_map import GameMap
 from render_order import RendrOrder
 
 if TYPE_CHECKING:
     from components.ai import BaseAI
+    from components.consumable import Consumable
     from components.fighter import Fighter
+    from components.inventory import Inventory
     from game_map import GameMap
 
 T = TypeVar("T", bound="Entity")
@@ -42,7 +45,7 @@ Methods:
         a game map.
 
         Parameters:
-            gamemap (Optional[GameMap]): The game map instance.
+            parent (Optional[GameMap]): The game map instance.
             x (int): The x-coordinate position.
             y (int): The y-coordinate position.
             char (str): The character symbol.
@@ -50,6 +53,8 @@ Methods:
             name (str): The name of the entity.
             blocks_movement (bool): Whether the entity blocks movement.
             render_order (RendrOrder): The rendering order of the entity.
+    
+    gamemap: TODO
 
     spawn:
         Creates a clone of the entity and places it at a new position on a new game map.
@@ -71,6 +76,7 @@ Methods:
             y (int): The new y-coordinate position.
             gamemap (Optional[GameMap]): The new game map instance.
 
+    distance : TODO
     move:
         Updates the position of the entity based on the provided movement offsets.
 
@@ -80,11 +86,11 @@ Methods:
 """
 class Entity :
 
-    gamemap : GameMap
+    parent : Union[GameMap, Inventory]
 
     def __init__ (
             self,
-            gamemap: Optional[GameMap] = None,
+            parent: Optional[GameMap] = None,
             x:int =0,
             y:int =0,
             char: str = "?",
@@ -101,16 +107,20 @@ class Entity :
         self.blocks_movement = blocks_movement
         self.render_order = render_order
 
-        if gamemap:
+        if parent:
             # If gamemap isn't provided now then it will be set later.
-            self.gamemap = gamemap
-            gamemap.entities.add(self)
+            self.parent = parent
+            parent.entities.add(self)
 
+    @property
+    def gamemap(self) -> GameMap:
+        return self.parent.gamemap
+    
     def spawn(self:T, gamemap:GameMap, x:int, y:int) -> T:
         clone = copy.deepcopy(self)
         clone.x = x
         clone.y = y
-        clone.gamemap = gamemap
+        clone.parent = gamemap
         gamemap.entities.add(clone)
         return clone
     
@@ -118,10 +128,15 @@ class Entity :
         self.x = x
         self.y = y
         if gamemap:
-            if hasattr(self, "gamemap"): # Possibly uninitialized.
-                self.gamemap.engine.remove(self)
-            self.gamemap = gamemap
+            if hasattr(self, "parent"): # Possibly uninitialized.
+                if self.parent is self.gamemap:
+                    self.gamemap.entities.remove(self)
+            self.parent = gamemap
             gamemap.entities.add(self)
+
+    def distance(self, x: int, y: int) -> float:
+        """Return the distance between the current entity and the given (x, y) coordinate."""
+        return max(abs(x -self.x) , abs(y-self.y))
 
     def move(self, dx:int, dy:int) -> None:
         self.x += dx
@@ -139,6 +154,7 @@ Attributes:
         provided AI class.
     fighter (Fighter):
         The combat statistics of the actor, including health, defense, and power.
+    inventory : TODO
 
 Methods:
     __init__:
@@ -152,6 +168,7 @@ Methods:
             name (str): The name of the actor.
             ai_cls (Type[BaseAI]): The AI class for the actor.
             fighter (Fighter): The combat statistics of the actor.
+            inventory : TODO
 
     is_alive:
         Returns whether the actor is alive based on the presence of AI.
@@ -160,7 +177,7 @@ Methods:
             bool: True if the actor has AI and is thus considered alive.
 """
 class Actor(Entity):
-   def __init__(
+    def __init__(
        self,
        *,
        x: int = 0,
@@ -169,21 +186,54 @@ class Actor(Entity):
        color: Tuple[int, int, int] = (255, 255, 255),
        name: str = "<Unnamed>",
        ai_cls: Type[BaseAI],
-       fighter: Fighter
-   ):
-       super().__init__(
+       fighter: Fighter,
+       inventory: Inventory,
+    ):
+        super().__init__(
            x=x,
            y=y,
            char=char,
            color=color,
            name=name,
            blocks_movement=True,
-           render_order= RendrOrder.ACTOR
-       )
-       self.ai: Optional[BaseAI] = ai_cls(self)
-       self.fighter = fighter
-       self.fighter.entity = self
-   @property
-   def is_alive(self) -> bool:
-       """Returns True as long as this actor can perform actions."""
-       return bool(self.ai)
+           render_order= RendrOrder.ACTOR,
+        )
+
+        self.ai: Optional[BaseAI] = ai_cls(self)
+       
+        self.fighter = fighter
+        self.fighter.parent = self
+
+        self.inventory = inventory
+        self.inventory.parent = self
+       
+    @property
+    def is_alive(self) -> bool:
+        """Returns True as long as this actor can perform actions."""
+        return bool(self.ai)
+   
+class Item(Entity):
+    def __init__(
+            self,
+            *, 
+            x: int = 0, 
+            y: int = 0, 
+            char: str = "?", 
+            color: Tuple[int] = (255, 255, 255), 
+            name: str = "<Unnamed>", 
+            consumable: Consumable
+    ):
+        super().__init__(
+            x=x,
+            y=y,
+            char=char,
+            color=color,
+            name=name,
+            blocks_movement=False,
+            render_order=RendrOrder.ITEM,
+        )
+
+        self.consumable = consumable
+        self.consumable.parent = self
+
+        

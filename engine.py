@@ -1,19 +1,19 @@
 from __future__ import annotations
 
+import lzma
+import pickle
 from typing import TYPE_CHECKING
 
-from tcod.context import Context
 from tcod.console import Console
 from tcod.map import compute_fov
 
-from input_handlers import MainGameEventHandler
+import exceptions
 from message_log import MessageLog
 from render_functions import render_bar, render_names_at_mouse_location
 
 if TYPE_CHECKING:
     from entity import Actor
     from game_map import GameMap
-    from input_handlers import EventHandler
 
 """
 Engine class:
@@ -59,12 +59,12 @@ Methods:
 
         Return:
             > None
+    save_as: TODO Save this Engine instance as a compressed file.
 """
 class Engine:
     game_map: GameMap
 
     def __init__(self, player: Actor):
-        self.event_handler: EventHandler = MainGameEventHandler(self)
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         self.player = player
@@ -72,7 +72,10 @@ class Engine:
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
             if entity.ai:
-                entity.ai.perform()
+                try:
+                    entity.ai.perform()
+                except exceptions.Impossible:
+                    pass # Ignore impossible action exceptions from AI
     
     def update_fov(self) -> None :
         self.game_map.visible[:] = compute_fov(
@@ -96,3 +99,9 @@ class Engine:
         )
 
         render_names_at_mouse_location(console= console, x = 21, y= 52, engine= self)
+
+    def save_as(self, filename: str) -> None:
+        save_data = lzma.compress(pickle.dumps(self))
+        with open(filename, "wb") as f:
+            f.write(save_data)
+

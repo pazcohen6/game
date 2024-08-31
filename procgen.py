@@ -105,15 +105,17 @@ place_entities function:
     Input:
         > room (RectangularRoom): The room in which to place the monsters.
         > dungeon (GameMap): The game map where the room is located.
-        > max_monster (int): The maximum number of monsters to place in the room.
+        > maximum_monster (int): The maximum number of monsters to place in the room.
+        > maximum_item (int): The maximum number of items to place in the room.
 
     Return:
         > None
 """
 def place_entities(
-        room:RectangularRoom, dungeon:GameMap, max_monster:int
+        room:RectangularRoom, dungeon:GameMap, maximum_monster:int, maximum_items: int,
 ) -> None:
-    number_of_monsters = random.randint(0, max_monster)
+    number_of_monsters = random.randint(0, maximum_monster)
+    number_of_items = random.randint(0, maximum_items)
 
     for i in range(number_of_monsters):
         x = random.randint(room.x1 + 1, room.x2 - 1)
@@ -124,6 +126,22 @@ def place_entities(
                 entity_factories.orc.spawn(dungeon, x, y)
             else:
                 entity_factories.troll.spawn(dungeon, x, y)
+
+    for i in range(number_of_items):
+        x = random.randint(room.x1 + 1, room.x2 - 1)
+        y = random.randint(room.y1 + 1, room.y2 - 1)
+        
+        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
+            item_chance = random.random()
+            
+            if item_chance < 0.5:
+                entity_factories.health_potion.spawn(dungeon, x, y)
+            if item_chance < 0.65:
+                entity_factories.firecube_scroll.spawn(dungeon, x, y)
+            elif item_chance < 0.80:
+                entity_factories.confusion_scroll.spawn(dungeon, x, y)
+            else:
+                entity_factories.lightning_scroll.spawn(dungeon, x, y)
 
 """
 generate_dungeon function:
@@ -136,7 +154,8 @@ generate_dungeon function:
         > room_max_size (int): The maximum width/height of a room.
         > map_width (int): The width of the dungeon map.
         > map_height (int): The height of the dungeon map.
-        > max_monster_per_room (int): The maximum number of monsters per room.
+        > max_monsters_per_room (int): The maximum number of monsters per room.
+        > max_items_per_room (int): The maximum number of items per room.
         > engine (Engine): The game engine, including the player entity.
 
     Return:
@@ -148,7 +167,8 @@ def generate_dungeon(
         room_max_size:int,
         map_width:int,
         map_height:int,
-        max_monster_per_room: int,
+        max_monsters_per_room: int,
+        max_items_per_room: int,
         engine: 'Engine',
     ) -> GameMap:
     
@@ -178,7 +198,7 @@ def generate_dungeon(
             for x,y in tunnle_between(rooms[-1].center, new_room.center):
                 dungeon.tiles[x,y] = tile_types.floor
         
-        place_entities(new_room,dungeon,max_monster_per_room)
+        place_entities(new_room,dungeon,max_monsters_per_room, max_items_per_room)
 
         rooms.append(new_room)
 
