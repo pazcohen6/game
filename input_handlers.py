@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 
 from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union
-from tcod import console
+import tcod
 from tcod.console import Console
 import tcod.event
 
@@ -50,7 +50,7 @@ WAIT_KEYS = {
 
 # TODO
 }
-CONFIRM_KEYS ={
+CONFIRM_KEYS = {
     tcod.event.K_RETURN,
     tcod.event.K_KP_ENTER,
 }
@@ -197,9 +197,12 @@ class MainGameEventHandler(EventHandler):
 
         # get the pressed key form the system
         key = event.sym
-
+        modifier = event.mod
         player = self.engine.player
 
+        if key == tcod.event.K_EQUALS or key == tcod.event.K_u:
+            return actions.TakeStairsAction(player)
+        
         # actions to move up, down, left and right.
         if key in MOVE_KEYS:
             dx, dy = MOVE_KEYS[key]

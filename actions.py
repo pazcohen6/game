@@ -117,6 +117,18 @@ class WaitAction(Action):
         pass
 
 """
+    TODO Take the stairs, if any exist at the entity's location.
+"""
+class TakeStairsAction(Action):
+    def perform(self) -> None:
+        if (self.entity.x, self.entity.y) == self.engine.game_map.downstairs_location:
+            self.engine.game_world.generate_floor()
+            self.engine.message_log.add_message(
+                "You descend the staircase.", color.descend
+            )
+        else:
+            raise exceptions.Impossible("There are no stairs here.")
+"""
 ActionWithDirection class (inherits from Action):
     A base class for actions that require a direction, such as movement or attacking.
     This class provides properties to determine the destination coordinates and
