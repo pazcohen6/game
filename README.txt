@@ -1,8 +1,10 @@
 python minimum version 3.6
 tcod minimum version 
 
-keybind :
+cradit to Roguelike Tutorials : https://rogueliketutorials.com/tutorials/tcod/v2/
 
+
+keybind :
 moment in 8 directions :
 numpad :
 7	8	9	↖ ↑ ↗
@@ -21,3 +23,6 @@ inventory : i
 drop item : d
 select tile : / or / (numd divide)
 use stairs : = or u
+
+changes :
+ - Fireblall -> Firecube : euclidean distance [sqr(x^2 + y^2)] -> L1 [|x| + |y|]
