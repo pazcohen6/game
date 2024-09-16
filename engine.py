@@ -32,6 +32,8 @@ Attributes:
         The current mouse location on the screen.
     player (Actor):
         The player character entity in the game.
+    game_world (GameWorld):
+        The game world, responsible for generating floors and managing the dungeon's state.
 
 Methods:
     handle_enemy_turns:
@@ -51,15 +53,23 @@ Methods:
 
     render:
         Renders the current game state to the provided console. This includes
-        rendering the game map, message log, player health bar, and names of entities
-        at the mouse location.
+        rendering the game map, message log, player health bar, dungeon level,
+        and names of entities at the mouse location.
 
         Parameters:
             console (Console): The console to which the game state is rendered.
 
         Return:
             > None
-    save_as: TODO Save this Engine instance as a compressed file.
+
+    save_as:
+        Compresses and saves the current engine state to a file.
+
+        Parameters:
+            filename (str): The name of the file where the engine state will be saved.
+
+        Return:
+            > None
 """
 class Engine:
     game_map: GameMap

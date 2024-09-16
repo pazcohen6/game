@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
+# Define the data type for graphical elements, including character, foreground color, and background color.
 graphic_dt = np.dtype(
     [
         ("ch",np.int32), # Unicode codepoint
@@ -10,6 +11,7 @@ graphic_dt = np.dtype(
     ]
 )
 
+# Define the data type for tiles, including properties for walkability, transparency, and graphical representation.
 tile_dt = np.dtype(
     [
         ("walkable", np.bool), # Ture if the tile is walkable
@@ -46,7 +48,7 @@ def new_tile(
 # Represent unexplored, unseen tiles
 SHROUD = np.array((ord(" "), (255,255,255), (0,0,0)), dtype=graphic_dt)
 
-#  Represents a floor tile in the game. It is walkable and transparent,
+# Represents a floor tile in the game. It is walkable and transparent,
 floor = new_tile(
     walkable=True,
     transparent=True,

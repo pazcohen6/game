@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from components.consumable import Consumable
     from components.fighter import Fighter
     from components.inventory import Inventory
+    from components.level import Level
     from game_map import GameMap
 
 T = TypeVar("T", bound="Entity")
@@ -38,6 +39,8 @@ Attributes:
         Indicates whether the entity blocks movement on the map.
     render_order (RendrOrder):
         The rendering order of the entity, which determines the drawing order on the map.
+    level (Level):
+        The level component for the entity, which tracks the entity's level, experience, and progression.
 
 Methods:
     __init__:
@@ -54,7 +57,11 @@ Methods:
             blocks_movement (bool): Whether the entity blocks movement.
             render_order (RendrOrder): The rendering order of the entity.
     
-    gamemap: TODO
+    gamemap (property):
+        Retrieves the game map instance the entity is associated with.
+        
+        Returns:
+            GameMap: The game map where the entity is located.
 
     spawn:
         Creates a clone of the entity and places it at a new position on a new game map.
@@ -73,12 +80,21 @@ Methods:
 
         Parameters:
             x (int): The new x-coordinate position.
-            y (int): The new y-coordinate position.
+            y (int): The new game map instance.
             gamemap (Optional[GameMap]): The new game map instance.
 
-    distance : TODO
+    distance:
+        Calculates the distance between the current entity and the provided (x, y) coordinates.
+
+        Parameters:
+            x (int): The x-coordinate of the target position.
+            y (int): The y-coordinate of the target position.
+
+        Returns:
+            float: The calculated distance.
+
     move:
-        Updates the position of the entity based on the provided movement offsets.
+        Updates the entity's position based on movement offsets.
 
         Parameters:
             dx (int): The movement offset in the x direction.
@@ -154,7 +170,10 @@ Attributes:
         provided AI class.
     fighter (Fighter):
         The combat statistics of the actor, including health, defense, and power.
-    inventory : TODO
+    inventory (Inventory):
+        The inventory of the actor, containing items the actor can carry.
+    level (Level):
+        The level component of the actor, which tracks experience, level-ups, and stat progression.
 
 Methods:
     __init__:
@@ -168,13 +187,14 @@ Methods:
             name (str): The name of the actor.
             ai_cls (Type[BaseAI]): The AI class for the actor.
             fighter (Fighter): The combat statistics of the actor.
-            inventory : TODO
+            inventory (Inventory): The actor's inventory.
+            level (Level): The level component of the actor.
 
-    is_alive:
-        Returns whether the actor is alive based on the presence of AI.
+    is_alive (property):
+        Checks if the actor is alive based on whether it has AI.
 
         Returns:
-            bool: True if the actor has AI and is thus considered alive.
+            bool: True if the actor has AI and is considered alive, otherwise False.
 """
 class Actor(Entity):
     def __init__(
@@ -188,6 +208,7 @@ class Actor(Entity):
        ai_cls: Type[BaseAI],
        fighter: Fighter,
        inventory: Inventory,
+       level: Level,
     ):
         super().__init__(
            x=x,
@@ -206,12 +227,36 @@ class Actor(Entity):
 
         self.inventory = inventory
         self.inventory.parent = self
+
+        self.level = level
+        self.level.parent = self
        
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
         return bool(self.ai)
-   
+
+"""
+Item class:
+    Represents an item that can be picked up and used in the game world. This class
+    extends the base Entity class and adds functionality for consumables.
+
+Attributes:
+    consumable (Consumable):
+        The consumable component of the item, representing the item's effect when used.
+
+Methods:
+    __init__:
+        Initializes a new item with the specified attributes and consumable effect.
+
+        Parameters:
+            x (int): The x-coordinate position.
+            y (int): The y-coordinate position.
+            char (str): The character symbol.
+            color (Tuple[int, int, int]): The RGB color.
+            name (str): The name of the item.
+            consumable (Consumable): The consumable component of the item.
+"""
 class Item(Entity):
     def __init__(
             self,
@@ -235,5 +280,3 @@ class Item(Entity):
 
         self.consumable = consumable
         self.consumable.parent = self
-
-        

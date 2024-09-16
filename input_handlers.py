@@ -66,12 +66,34 @@ CURSOR_Y_KEY = {
 
 ActionOrHandler = Union[Action, "BaseEventHandler"]
 """
-    TODO:
-        An event handler return value which can trigger an action or switch active handlers.
+BaseEventHandler class:
+    A base class for handling events in the game. It processes incoming events and can
+    switch between active event handlers or trigger actions based on the event type.
 
-        If a handler is returned then it will become the active handler for future events.
-        If an action is returned it will be attempted and if it's valid then
-        MainGameEventHandler will become the active handler.
+Attributes:
+    None
+
+Methods:
+    handle_events:
+        Processes an event and returns the next active event handler.
+        Parameters:
+            event (tcod.event.Event): The event to be handled.
+        Return:
+            > BaseEventHandler: The next active event handler.
+
+    on_render:
+        Renders the current state of the game.
+        Parameters:
+            console (tcod.console.Console): The console where the game state is rendered.
+        Return:
+            > None
+
+    ev_quit:
+        Handles the quit event by raising a SystemExit exception.
+        Parameters:
+            event (tcod.event.Quit): The quit event.
+        Return:
+            > None
 """
 class BaseEventHandler(tcod.event.EventDispatch[ActionOrHandler]):
     def handle_events(self, event: tcod.event.Event) -> BaseEventHandler:
@@ -89,7 +111,29 @@ class BaseEventHandler(tcod.event.EventDispatch[ActionOrHandler]):
         raise SystemExit()
 
 """
-    TODO: Display a popup text window.
+PopupMessage class:
+    Displays a popup message on the screen while retaining the parent handler's state.
+
+Attributes:
+    parent (BaseEventHandler):
+        The parent event handler that will be rendered in the background.
+    text (str):
+        The message to display in the popup.
+
+Methods:
+    on_render:
+        Renders the parent handler and then displays the popup message.
+        Parameters:
+            console (tcod.console.Console): The console to render the popup and parent state.
+        Return:
+            > None
+
+    ev_keydown:
+        Handles keydown events, and closes the popup by returning to the parent handler.
+        Parameters:
+            event (tcod.event.KeyDown): The keydown event.
+        Return:
+            > BaseEventHandler: The parent handler, closing the popup.
 """
 class PopupMessage(BaseEventHandler):
     def __init__(self, parant_hndler: BaseEventHandler, text: str):
@@ -111,24 +155,41 @@ class PopupMessage(BaseEventHandler):
         return self.parant
 """
 EventHandler class:
-    Processes game events and dispatches corresponding actions.
-    Subclass of tcod's EventDispatch
+    Processes game events and dispatches corresponding actions. It extends the BaseEventHandler
+    to handle game-specific event logic and interactions with the game engine.
+
 Attributes:
     engine (Engine):
-        The engine instance that handles the game state and logic.
+        The engine instance that manages the game state, entities, and logic.
+
 Methods:
-    handle_events: TODO
-    handle_action: TODO
+    handle_events:
+        Processes an event and either switches to a different event handler or processes
+        actions that affect the game state.
+        Parameters:
+            event (tcod.event.Event): The event to be handled.
+        Return:
+            > BaseEventHandler: The next active event handler.
+
+    handle_action:
+        Processes an action and checks if it is valid, performing it if so.
+        If an action is performed, it updates the game state.
+        Parameters:
+            action (Optional[Action]): The action to handle.
+        Return:
+            > bool: True if the action advances the game turn, False otherwise.
+
     ev_mousemotion:
-        Updates the mouse location in the engine based on mouse movement events.
+        Updates the engine's mouse location based on mouse movement events.
         Parameters:
             event (tcod.event.MouseMotion): The mouse motion event.
         Return:
             > None
+
     on_render:
         Renders the current game state to the provided console.
         Parameters:
-            console (tcod.console.Console): The console to which the game state is rendered.
+            console (tcod.console.Console): The console to render the game state.
         Return:
             > None
 """
@@ -146,6 +207,8 @@ class EventHandler(BaseEventHandler):
             if not self.engine.player.is_alive:
                 # The player was killed sometime during or after the action.
                 return GameOverEventHandler(self.engine)
+            elif self.engine.player.level.requires_level_up:
+                return LevelUpEventHandler(self.engine)
             return MainGameEventHandler(self.engine)  # Return to the main handler.
         return self
 
@@ -175,18 +238,20 @@ class EventHandler(BaseEventHandler):
 
 """
 MainGameEventHandler class:
-    Handles events during the main game loop and processes actions.
-    Inherits from EventHandler.
+    Handles events during the main game loop, processes player actions, and manages
+    game-specific interactions. It extends the EventHandler class.
 
 Methods:
     ev_keydown:
-        Handles keydown events and maps them to corresponding actions.
+        Handles keydown events, maps them to corresponding actions, and triggers
+        appropriate handlers or actions based on the key pressed.
 
         Parameters:
             event (tcod.event.KeyDown): The keydown event.
 
         Return:
-            > Optional[Action]
+            > Optional[ActionOrHandler]: The action or handler triggered by the key press,
+              or None if no action is triggered.
 """
 class MainGameEventHandler(EventHandler):
     # Handle keydown events and map them to corresponding actions.
@@ -226,6 +291,8 @@ class MainGameEventHandler(EventHandler):
             return InventoryActivateHndler(self.engine)
         elif key == tcod.event.K_d:
             return InventoryDropHandler(self.engine)
+        elif key == tcod.event.K_c:
+            return CaracterScreenEventHandler(self.engine)
         elif key == tcod.event.K_SLASH or key == tcod.event.K_KP_DIVIDE:
             return LookHandler(self.engine)
 
@@ -235,22 +302,35 @@ class MainGameEventHandler(EventHandler):
 
 """
 GameOverEventHandler class:
-    Handles events when the game is over.
-    Inherits from EventHandler.
+    Handles events when the game is over, including clean-up operations and exiting
+    the game. It extends the EventHandler class.
 
 Methods:
-    on_quit: TODO
-        Handle exiting out of a finished game.
-    ev_quit: TODO
+    on_quit:
+        Handles the cleanup and exit process when the game is finished. It removes
+        any existing save game files and raises an exception to quit the game without saving.
+
+        Return:
+            > None
+
+    ev_quit:
+        Handles the quit event, triggering the on_quit method to perform cleanup and exit.
+
+        Parameters:
+            event (tcod.event.Quit): The quit event.
+
+        Return:
+            > None
+
     ev_keydown:
-        Handles keydown events to determine if an escape action should be performed.
+        Handles keydown events and performs the exit action if the escape key is pressed.
 
         Parameters:
             event (tcod.event.KeyDown): The keydown event.
 
         Return:
-            > Optional[Action]
-"""    
+            > Optional[Action]: Returns None if the escape key is pressed, triggering the on_quit method.
+"""   
 class GameOverEventHandler(EventHandler): 
     def on_quit(self) -> None:
         if os.path.exists("savegame.sav"):
@@ -266,34 +346,37 @@ class GameOverEventHandler(EventHandler):
 
 """
 HistoryViewer class:
-    Displays the message history in a larger window that can be navigated.
-    Inherits from EventHandler.
+    Displays and allows navigation of the message history in a larger, custom window.
+    It inherits from EventHandler and provides functionality for viewing and navigating
+    through the game's message log.
 
 Attributes:
     log_length (int):
-        The length of the message log.
+        The total number of messages in the message log.
     cursor (int):
-        The current position of the cursor in the message log.
+        The current position of the cursor within the message log.
 
 Methods:
     on_render:
-        Renders the message history in a custom console.
+        Renders the message history on a custom console, including a frame and a title.
 
         Parameters:
-            console (Console): The console to which the message history is rendered.
+            console (tcod.console.Console): The console to which the message history is rendered.
 
         Return:
             > None
 
     ev_keydown:
-        Handles keydown events to navigate the message history.
+        Handles keydown events to navigate through the message history. Moves the cursor based on
+        specific keys and returns to the main game state if another key is pressed.
 
         Parameters:
             event (tcod.event.KeyDown): The keydown event.
 
         Return:
-            > None
-"""    
+            > Optional[MainGameEventHandler]: Returns the MainGameEventHandler if a navigation key
+              is pressed; otherwise, returns None.
+"""
 class HistoryViewer(EventHandler):
     """Print the history on a larger window which can be navigated."""
 
@@ -346,9 +429,35 @@ class HistoryViewer(EventHandler):
             return MainGameEventHandler(self.engine)
         return None
 
-
 """
-    TODO
+AskUserEventHandler class:
+    Handles user input for actions requiring special input or confirmation. It provides
+    default behavior to exit the input handler on any key press or mouse click.
+
+Methods:
+    ev_keydown:
+        Handles keydown events and exits the input handler for any non-modifier key.
+
+        Parameters:
+            event (tcod.event.KeyDown): The keydown event.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the result of on_exit() method.
+
+    ev_mousebuttondown:
+        Handles mouse button down events and exits the input handler.
+
+        Parameters:
+            event (tcod.event.MouseButtonDown): The mouse button down event.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the result of on_exit() method.
+
+    on_exit:
+        Handles the exit or cancellation of an action and returns to the main event handler.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the MainGameEventHandler instance.
 """
 class AskUserEventHandler(EventHandler):
     """Handles user input for actions which require special input."""
@@ -378,12 +487,210 @@ class AskUserEventHandler(EventHandler):
         By default this returns to the main event handler.
         """
         return MainGameEventHandler(self.engine)
+"""
+CaracterScreenEventHandler class:
+    Displays detailed information about the player's character in a separate screen.
+    Inherits from AskUserEventHandler.
+
+Attributes:
+    TITLE (str):
+        The title displayed at the top of the character information window.
+
+Methods:
+    on_render:
+        Renders the character information to the console, including level, XP, attack, and defense stats.
+
+        Parameters:
+            console (Console): The console to render the character information.
+
+        Return:
+            > None
+"""
+class CaracterScreenEventHandler(AskUserEventHandler):
+    TITLE = "Character Information"
+    def on_render(self, console: Console) -> None:
+        super().on_render(console)
+
+        if self.engine.player.x <= 30:
+            x = 40
+        else:
+            x = 0
+
+        y = 0
+
+        width = len(self.TITLE) + 4
+
+        console.draw_frame(
+            x = x,
+            y = y,
+            width = width,
+            height = 7,
+            title = self.TITLE,
+            clear = True,
+            fg = (255, 255, 255),
+            bg = (0, 0, 0),
+        )
+
+        console.print(
+            x=x + 1, y=y + 1, string=f"Level: {self.engine.player.level.current_level}"
+        )
+        console.print(
+            x=x + 1, y=y + 2, string=f"XP: {self.engine.player.level.current_xp}"
+        )
+        console.print(
+            x=x + 1,
+            y=y + 3,
+            string=f"XP for next Level: {self.engine.player.level.experience_to_next_level}",
+        )
+        console.print(
+            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power}"
+        )
+        console.print(
+            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
+        )
+
+"""
+LevelUpEventHandler class:
+    Handles events when the player levels up, allowing the user to select an attribute to increase.
+    Inherits from AskUserEventHandler.
+
+Attributes:
+    TITLE (str):
+        The title displayed at the top of the level-up window.
+
+Methods:
+    on_render:
+        Renders the level-up interface and options to the console.
+
+        Parameters:
+            console (Console): The console to render the level-up interface.
+
+        Return:
+            > None
+
+    ev_keydown:
+        Handles keydown events to select an attribute to increase.
+
+        Parameters:
+            event (tcod.event.KeyDown): The keydown event.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the result of on_exit() or action based on selected attribute.
+
+    ev_mousebuttondown:
+        Prevents mouse clicks from exiting the menu.
+
+        Parameters:
+            event (tcod.event.MouseButtonDown): The mouse button down event.
+
+        Return:
+            > Optional[ActionOrHandler]: Always returns None to prevent exit.
+"""
+class LevelUpEventHandler(AskUserEventHandler):
+    TITLE = "Level Up"
+
+    def on_render(self, console: Console) -> None:
+        super().on_render(console)
+
+        if self.engine.player.x <= 30 :
+            x = 40
+        else :
+            x = 0
+        
+        console.draw_frame(
+            x = x,
+            y = 0,
+            width = 35,
+            height = 8,
+            title = self.TITLE,
+            clear = True,
+            fg = (255, 255, 255),
+            bg = (0, 0, 0),
+        )
+
+        console.print(x = x+1, y = 1, string = "Congratulations! You level up!")
+        console.print(x = x+1, y = 2, string = "Select an attribute to increase.")
+
+        console.print(
+            x = x + 1,
+            y = 4,
+            string=f"a) Constitution (+20 HP, from {self.engine.player.fighter.max_hp})",
+        )
+        console.print(
+            x = x + 1,
+            y = 5,
+            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.power})",
+        )
+        console.print(
+            x = x + 1,
+            y = 6,
+            string=f"c) Agility (+1 defense, from {self.engine.player.fighter.defense})",
+        )
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        player = self.engine.player
+        key = event.sym
+        index = key - tcod.event.K_a
+
+        if 0 <= index <= 2:
+            if index == 0:
+                player.level.increase_max_hp()
+            elif index == 1:
+                player.level.increase_power()
+            else:
+                player.level.increase_defense()
+        
+        else:
+            self.engine.message_log.add_message('Invalid entry.', color.invalid)
+
+            return None
+        
+        return super().ev_keydown(event)
     
+    # Don't allow the player to click to exit the menu, like normal.
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        return None
+    
+
+
+"""
+InventoryEventHandler class:
+    Displays the player's inventory and allows selection of items.
+    Inherits from AskUserEventHandler.
+
+Attributes:
+    TITLE (str):
+        The title displayed at the top of the inventory window.
+
+Methods:
+    on_render:
+        Renders the inventory menu to the console.
+
+        Parameters:
+            console (Console): The console to render the inventory menu.
+
+        Return:
+            > None
+
+    ev_keydown:
+        Handles keydown events to select an item from the inventory.
+
+        Parameters:
+            event (tcod.event.KeyDown): The keydown event.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the result of on_item_selected() or None.
+
+    on_item_selected:
+        Called when the user selects a valid item.
+
+        Parameters:
+            item (Item): The selected item.
+
+        Return:
+            > Optional[ActionOrHandler]: Must be implemented by subclasses.
+"""
 class InventoryEventHandler(AskUserEventHandler):
-    """
-    This handler lets the user select an item.
-    What happens then depends on the subclass.
-    """
 
     TITLE = "<missing title>"
 
@@ -445,7 +752,19 @@ class InventoryEventHandler(AskUserEventHandler):
         raise NotImplementedError()
     
 """
-    TODO
+InventoryActivateHandler class:
+    Handles using an item from the inventory.
+    Inherits from InventoryEventHandler.
+
+Methods:
+    on_item_selected:
+        Returns the action for the selected item.
+
+        Parameters:
+            item (Item): The selected item.
+
+        Return:
+            > Optional[ActionOrHandler]: The action associated with the item.
 """
 class InventoryActivateHndler(InventoryEventHandler):
     """Handle using an inventory item."""
@@ -457,7 +776,19 @@ class InventoryActivateHndler(InventoryEventHandler):
         return item.consumable.get_action(self.engine.player)
     
 """
-    TODO
+InventoryDropHandler class:
+    Handles dropping an item from the inventory.
+    Inherits from InventoryEventHandler.
+
+Methods:
+    on_item_selected:
+        Creates an action to drop the selected item.
+
+        Parameters:
+            item (Item): The selected item.
+
+        Return:
+            > Optional[ActionOrHandler]: The action to drop the item.
 """
 class InventoryDropHandler(InventoryEventHandler):
     """Handle dropping an inventory item."""
@@ -469,7 +800,47 @@ class InventoryDropHandler(InventoryEventHandler):
         return actions.DropItem(self.engine.player, item)
 
 """
-    TODO
+SelectIndexHandler class:
+    Handles asking the user to select a tile index on the map.
+    Inherits from AskUserEventHandler.
+
+Methods:
+    on_render:
+        Highlights the tile under the cursor.
+
+        Parameters:
+            console (Console): The console to render the selection.
+
+        Return:
+            > None
+
+    ev_keydown:
+        Handles key movement and confirmation keys.
+
+        Parameters:
+            event (tcod.event.KeyDown): The keydown event.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the result of on_index_selected() or None.
+
+    ev_mousebuttondown:
+        Handles mouse button down events to confirm selection.
+
+        Parameters:
+            event (tcod.event.MouseButtonDown): The mouse button down event.
+
+        Return:
+            > Optional[ActionOrHandler]: Returns the result of on_index_selected() or None.
+
+    on_index_selected:
+        Called when a tile index is selected.
+
+        Parameters:
+            x (int): The x coordinate of the selected tile.
+            y (int): The y coordinate of the selected tile.
+
+        Return:
+            > Optional[ActionOrHandler]: Must be implemented by subclasses.
 """
 class SelectIndexHandler(AskUserEventHandler):
     """Handles asking the user for an index on the map."""
@@ -530,7 +901,24 @@ class SelectIndexHandler(AskUserEventHandler):
         raise NotImplementedError()
     
 """
-    TODO
+SingleRangedAttackHandler class:
+    Handles targeting a single enemy with a callback for the action.
+    Inherits from SelectIndexHandler.
+
+Attributes:
+    callback (Callable[[Tuple[int, int]], Optional[Action]]):
+        A callback function to handle the action at the selected tile.
+
+Methods:
+    on_index_selected:
+        Executes the callback with the coordinates of the selected tile.
+
+        Parameters:
+            x (int): The x coordinate of the selected tile.
+            y (int): The y coordinate of the selected tile.
+
+        Return:
+            > Optional[Action]: The action returned by the callback.
 """
 class LookHandler(SelectIndexHandler):
     """Lets the player look around using the keyboard."""
@@ -539,7 +927,24 @@ class LookHandler(SelectIndexHandler):
         return MainGameEventHandler(self.engine)
 
 """
-    TODO
+SingleRangedAttackHandler class:
+    Handles targeting a single enemy with a callback for the action.
+    Inherits from SelectIndexHandler.
+
+Attributes:
+    callback (Callable[[Tuple[int, int]], Optional[Action]]):
+        A callback function to handle the action at the selected tile.
+
+Methods:
+    on_index_selected:
+        Executes the callback with the coordinates of the selected tile.
+
+        Parameters:
+            x (int): The x coordinate of the selected tile.
+            y (int): The y coordinate of the selected tile.
+
+        Return:
+            > Optional[Action]: The action returned by the callback.
 """
 class SingleRangedAttackHandler(SelectIndexHandler):
     """Handles targeting a single enemy. Only the enemy selected will be affected."""
@@ -553,7 +958,36 @@ class SingleRangedAttackHandler(SelectIndexHandler):
         return self.callback((x, y))
 
 """
-    TODO
+AreaRangedAttackHandler class:
+    Handles targeting an area within a given radius. Highlights the affected area.
+    Inherits from SelectIndexHandler.
+
+Attributes:
+    radius (int):
+        The radius of the area to be affected.
+
+    callback (Callable[[Tuple[int, int]], Optional[Action]]:
+        A callback function to handle the action in the targeted area.
+
+Methods:
+    on_render:
+        Highlights the area within the radius around the cursor.
+
+        Parameters:
+            console (Console): The console to render the highlighted area.
+
+        Return:
+            > None
+
+    on_index_selected:
+        Executes the callback with the coordinates of the center of the area.
+
+        Parameters:
+            x (int): The x coordinate of the selected tile.
+            y (int): The y coordinate of the selected tile.
+
+        Return:
+            > Optional[Action]: The action returned by the callback.
 """
 class AreaRangedAttackHandler(SelectIndexHandler):
     """Handles targeting an area within a given radius. Any entity within the area will be affected."""

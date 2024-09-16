@@ -31,6 +31,8 @@ Attributes:
         A 2D array indicating which tiles are currently visible.
     explored (np.ndarray):
         A 2D array indicating which tiles have been explored.
+    downstairs_location (Tuple[int, int]):
+        The (x, y) coordinates of the stairs leading to the next floor.
 
 Methods:
     __init__:
@@ -43,17 +45,22 @@ Methods:
             height (int): The height of the map.
             entities (Iterable[Entity]): Initial entities to place on the map.
 
-    gamemap: TODO
+    gamemap (property):
+        Returns the GameMap instance.
 
-    actors (Iterator[Actor]):
+    actors (property):
         Iterates over living actors on the map.
         
         Yields:
             Actor: Each living actor on the map.
     
-    items : TODO
+    items (property):
+        Iterates over items on the map.
+        
+        Yields:
+            Item: Each item on the map.
 
-    get_blocking_ntity_at_location:
+    get_blocking_entity_at_location:
         Retrieves an entity at a specific location that blocks movement.
 
         Parameters:
@@ -157,7 +164,52 @@ class GameMap:
                 )
 
 """
-    TODO: Holds the settings for the GameMap, and generates new maps when moving down the stairs.
+GameWorld class:
+    Manages the settings and state of the game world. Handles floor generation,
+    including room size, monster and item limits, and current floor tracking.
+
+Attributes:
+    engine (Engine):
+        The engine instance controlling the game. Used for interacting with the game state.
+    map_width (int):
+        The width of the game map.
+    map_height (int):
+        The height of the game map.
+    max_rooms (int):
+        The maximum number of rooms that can be generated on each floor.
+    room_min_size (int):
+        The minimum size for rooms generated on the map.
+    room_max_size (int):
+        The maximum size for rooms generated on the map.
+    max_monsters_per_room (int):
+        The maximum number of monsters that can spawn in each room.
+    max_items_per_room (int):
+        The maximum number of items that can spawn in each room.
+    current_floor (int):
+        Tracks the current floor number in the dungeon.
+
+Methods:
+    __init__:
+        Initializes a new GameWorld instance with the specified settings.
+
+        Parameters:
+            engine (Engine): The engine instance controlling the game.
+            map_width (int): The width of the game map.
+            map_height (int): The height of the game map.
+            max_rooms (int): The maximum number of rooms per floor.
+            room_min_size (int): The minimum size for generated rooms.
+            room_max_size (int): The maximum size for generated rooms.
+            max_monsters_per_room (int): The maximum number of monsters per room.
+            max_items_per_room (int): The maximum number of items per room.
+            current_floor (int): The starting floor number (default is 0).
+
+    generate_floor:
+        Generates a new floor, including rooms, monsters, and items.
+        Increases the current floor count by one and sets the newly generated
+        map as the active game map.
+
+        Returns:
+            None
 """
 class GameWorld:
     def __init__(

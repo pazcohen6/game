@@ -119,13 +119,29 @@ class HostileEnemy(BaseAI):
        return WaitAction(self.entity).perform()
 
 """
-    TODO
+ConfusedEnemy class:
+    A subclass of BaseAI that represents an enemy temporarily confused, moving
+    randomly for a certain number of turns before reverting to its original AI.
+
+Methods:
+    __init__:
+        Initializes the ConfusedEnemy with the entity, its previous AI, and
+        the number of turns it remains confused.
+
+        Input:
+            > entity (Actor): The entity controlled by this AI.
+            > previous_ai (Optional[BaseAI]): The original AI to revert to.
+            > turns_remaining (int): The number of turns the entity remains confused.
+    
+    perform:
+        Executes the AI's behavior while confused. The entity will move randomly
+        each turn, attacking if it bumps into another actor. After the effect
+        expires, the entity reverts to its original AI.
+
+        Return:
+            > None
 """
 class ConfusedEnemy(BaseAI):
-    """
-    A confused enemy will stumble around aimlessly for a given number of turns, then revert back to its previous AI.
-    If an actor occupies a tile it is randomly moving into, it will attack.
-    """
     def __init__(
             self, entity: Actor, previous_ai: Optional[BaseAI], turns_remaining: int
         ):

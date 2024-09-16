@@ -8,6 +8,7 @@ from render_order import RendrOrder
 
 if TYPE_CHECKING:
     from entity import Actor
+    
 """
 Fighter class:
     A component that adds combat-related attributes and behavior to an entity,
@@ -43,8 +44,25 @@ Methods:
         Return:
             > None
 
-    heal: TODO
-    take_damage: TODO
+    heal:
+        Restores health points to the entity, up to the maximum HP. Returns the
+        amount of health recovered.
+
+        Input:
+            > amount (int): The amount of health to restore.
+
+        Return:
+            > int: The amount of HP recovered.
+
+    take_damage:
+        Reduces the entity's current health points by the given amount and checks
+        if the entity should die.
+
+        Input:
+            > amount (int): The amount of damage taken.
+
+        Return:
+            > None
 """
 class Fighter(BaseComponent):
     parent: Actor
@@ -82,6 +100,8 @@ class Fighter(BaseComponent):
         self.parent.render_order = RendrOrder.CORPSE
 
         self.engine.message_log.add_message(death_massage, death_massage_color)
+
+        self.engine.player.level.add_xp(self.parent.level.xp_given)
 
     def heal(self, amount: int) -> int:
         if self.hp == self.max_hp:

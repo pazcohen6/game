@@ -7,13 +7,48 @@ import input_handlers
 import setup_game
 
 """
-    TODO: If the current event handler has an active Engine then save it.
+save_game function:
+    Saves the current game state if the event handler is an instance of the EventHandler class 
+    and has an active Engine. The game state is serialized and written to a file.
+
+Attributes:
+    handler (input_handlers.BaseEventHandler):
+        The event handler that manages the current game session.
+    filename (str):
+        The path to the file where the game state will be saved.
+
+Return:
+    > None
 """
 def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:
     if isinstance(handler, input_handlers.EventHandler):
         handler.engine.save_as(filename)
         print("Game Saved.")
 
+"""
+main function:
+    The entry point of the game, which sets up the screen, loads assets, and manages
+    the main game loop. This function initializes the game window, handles game events, 
+    and saves the game upon exit or exceptions.
+
+Attributes:
+    screan_width (int):
+        The width of the game screen in characters (each character is 16x16 pixels).
+    screan_height (int):
+        The height of the game screen in characters.
+    tileset (tcod.tileset.Tileset):
+        The font or tileset used to display the game, loaded from an image file.
+    handler (input_handlers.BaseEventHandler):
+        The current event handler managing the game state and user inputs.
+    context (tcod.context.Context):
+        The terminal context responsible for presenting the game screen and handling
+        the display buffer.
+    root_console (tcod.console.Console):
+        The console where all game graphics and text will be drawn.
+
+Return:
+    > None
+"""
 def main() -> None:
     # screan size is * 16 pixels in cmd chars
     screan_width = 100 #80
