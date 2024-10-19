@@ -22,10 +22,10 @@ Attributes:
         The maximum health points for the entity.
     _hp (int):
         The current health points for the entity.
-    defense (int):
-        The defense value that reduces incoming damage.
-    power (int):
-        The attack power of the entity.
+    base_defense (int):
+        The base defense value that reduces incoming damage.
+    base_power (int):
+        The attack base power of the entity.
 
 Methods:
     hp (property):
@@ -35,6 +35,30 @@ Methods:
 
         Return:
             > int: The current health points of the entity.
+
+    defense (property):
+        Calculates the total defense, including bonuses from equipment.
+
+        Return:
+            > int: The sum of base defense and equipment defense bonus.
+
+    power (property):
+        Calculates the total power, including bonuses from equipment.
+
+        Return:
+            > int: The sum of base power and equipment power bonus.
+
+    defense_bonus (property):
+        Retrieves the defense bonus from equipped items.
+
+        Return:
+            > int: Defense bonus from equipment or 0 if no equipment.
+
+    power_bonus (property):
+        Retrieves the power bonus from equipped items.
+
+        Return:
+            > int: Power bonus from equipment or 0 if no equipment.            
 
     die:
         Handles the death of the entity. Updates the entity's state to represent
@@ -67,11 +91,11 @@ Methods:
 class Fighter(BaseComponent):
     parent: Actor
 
-    def __init__(self, hp: int, defense: int, power: int):
+    def __init__(self, hp: int, base_defense: int, base_power: int):
         self.max_hp = hp
         self._hp = hp
-        self.defense = defense
-        self.power = power
+        self.base_defense = base_defense
+        self.base_power = base_power
 
     @property
     def hp(self) -> int:
@@ -83,6 +107,28 @@ class Fighter(BaseComponent):
 
         if self._hp == 0 and self.parent.ai:
             self.die()
+
+    @property
+    def defense(self) -> int:
+        return self.base_defense + self.defense_bonus
+    
+    @property
+    def power(self) -> int:
+        return self.base_power + self.power_bonus
+    
+    @property
+    def defense_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.defense_bonus
+        else:
+            return 0
+        
+    @property
+    def power_bonus(self) -> int:
+        if self.parent.equipment:
+            return self.parent.equipment.power_bonus
+        else:
+            return 0
 
     def die(self) -> None:
         if self.engine.player is self.parent:

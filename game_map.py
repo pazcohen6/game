@@ -181,10 +181,6 @@ Attributes:
         The minimum size for rooms generated on the map.
     room_max_size (int):
         The maximum size for rooms generated on the map.
-    max_monsters_per_room (int):
-        The maximum number of monsters that can spawn in each room.
-    max_items_per_room (int):
-        The maximum number of items that can spawn in each room.
     current_floor (int):
         Tracks the current floor number in the dungeon.
 
@@ -199,8 +195,6 @@ Methods:
             max_rooms (int): The maximum number of rooms per floor.
             room_min_size (int): The minimum size for generated rooms.
             room_max_size (int): The maximum size for generated rooms.
-            max_monsters_per_room (int): The maximum number of monsters per room.
-            max_items_per_room (int): The maximum number of items per room.
             current_floor (int): The starting floor number (default is 0).
 
     generate_floor:
@@ -221,8 +215,6 @@ class GameWorld:
             max_rooms: int,
             room_min_size: int,
             room_max_size: int,
-            max_monsters_per_room: int,
-            max_items_per_room: int,
             current_floor: int= 0,
         ):
 
@@ -235,9 +227,6 @@ class GameWorld:
 
         self.room_min_size = room_min_size
         self.room_max_size = room_max_size
-
-        self.max_monsters_per_room = max_monsters_per_room
-        self.max_items_per_room = max_items_per_room
 
         self.current_floor = current_floor
     
@@ -252,8 +241,6 @@ class GameWorld:
             room_max_size= self.room_max_size,
             map_width= self.map_width,
             map_height= self.map_height,
-            max_monsters_per_room= self.max_monsters_per_room,
-            max_items_per_room= self.max_items_per_room,
             engine= self.engine,
         )
         

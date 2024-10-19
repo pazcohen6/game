@@ -3,7 +3,6 @@ tcod minimum version
 
 cradit to Roguelike Tutorials : https://rogueliketutorials.com/tutorials/tcod/v2/
 
-
 keybind :
 moment in 8 directions :
 numpad :
@@ -19,9 +18,19 @@ scroll massag log by 1 : up arrow / down arrow
 scroll massag log by 10: page up / page down  
 
 pickup item : g
-inventory : i
+
+inventory : i - open the inventory
+	then latter from a to z
+
 drop item : d
+	then latter from a to z
+
 select tile : / or / (numd divide)
+	can move the selected tile with the mouse or numpad,
+	numpad + shift : move 5 tiles
+	numpad + shift : move 10 tiles
+	numpad + shift : move 20 tiles
+
 use stairs : = or u
 
 changes :

@@ -35,10 +35,6 @@ Attributes:
         The minimum size of a room in the dungeon.
     max_rooms (int):
         The maximum number of rooms to generate on the map.
-    max_monsters_per_room (int):
-        The maximum number of monsters that can spawn in a room.
-    max_items_per_room (int):
-        The maximum number of items that can spawn in a room.
     player (Actor):
         A copy of the player entity to be placed in the game world.
     engine (Engine):
@@ -57,9 +53,6 @@ def new_game() -> Engine:
     room_min_size = 6
     max_rooms = 30
 
-    max_monsters_per_room = 3
-    max_items_per_room = 2
-
     player = copy.deepcopy(entity_factories.player)
 
     engine = Engine(player=player)
@@ -70,15 +63,26 @@ def new_game() -> Engine:
         room_max_size = room_max_size,
         map_width = map_width,
         map_height = map_height,
-        max_monsters_per_room = max_monsters_per_room,
-        max_items_per_room = max_items_per_room,
     )
+    
     engine.game_world.generate_floor()
     engine.update_fov()
 
     engine.message_log.add_message(
         "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
     )
+
+    dagger = copy.deepcopy(entity_factories.dagger)
+    leather_armor = copy.deepcopy(entity_factories.leather_armor)
+    
+    dagger.parent = player.inventory
+    leather_armor.parent = player.inventory
+
+    player.inventory.items.append(dagger)
+    player.equipment.toggle_equip(dagger, add_message = False)
+
+    player.inventory.items.append(leather_armor)
+    player.equipment.toggle_equip(leather_armor, add_message = False)
     return engine
 
 """

@@ -128,7 +128,8 @@ class ItemAction(Action):
 
     def perform(self) -> None:
         """Invoke the items ability, this action will be given to provide context."""
-        self.item.consumable.activate(self)
+        if self.item.consumable:
+            self.item.consumable.activate(self)
 
 """
 DropItem class (inherits from ItemAction):
@@ -143,8 +144,33 @@ Methods:
 
 class DropItem(ItemAction):
     def perform(self) -> None:
+        if self.entity.equipment.item_is_equipped(self.item):
+            self.entity.equipment.toggle_equip(self.item)
+        
         self.entity.inventory.drop(self.item)
-    
+
+"""
+EquipAction class (inherits from Action):
+    An action that allows the entity to equip or unequip an item from its equipment.
+
+Attributes:
+    item (Item):
+        The item to be equipped or unequipped.
+
+Methods:
+    perform:
+        Toggles the equipped state of the item, equipping it if it is currently unequipped
+        or unequipping it if it is currently equipped.
+"""
+class EquipAction(Action):
+    def __init__(self, entity: Actor, item: Item):
+        super().__init__(entity)
+
+        self.item = item
+
+    def perform(self) -> None:
+        self.entity.equipment.toggle_equip(self.item)
+
 """
 WaitAction class (inherits from Action):
     An action that causes the entity to do nothing for a turn.
@@ -164,10 +190,9 @@ TakeStairsAction class (inherits from Action):
 
 Methods:
     perform:
-        If the entity is on a staircase, the floor is generated and the entity
-        descends. Otherwise, an exception is raised if no stairs are found.
+        Checks if the entity is on a staircase. If so, generates the next floor
+        and transitions the entity down the stairs. Raises an exception if no stairs are found.
 """
-
 class TakeStairsAction(Action):
     def perform(self) -> None:
         if (self.entity.x, self.entity.y) == self.engine.game_map.downstairs_location:
@@ -177,6 +202,7 @@ class TakeStairsAction(Action):
             )
         else:
             raise exceptions.Impossible("There are no stairs here.")
+        
 """
 ActionWithDirection class (inherits from Action):
     A base class for actions that require a direction, such as movement or attacking.
@@ -315,4 +341,3 @@ class BumpAction(ActionWithDirection):
         
         else:
             return MovementAction(self.entity ,self.dx, self.dy).perform()
-                
