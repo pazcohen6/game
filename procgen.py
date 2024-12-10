@@ -1,6 +1,7 @@
 from typing import Dict, Iterator, Tuple, List, TYPE_CHECKING
 import random
 import tcod
+from itertools import product
 
 import entity_factories
 from game_map import GameMap
@@ -252,17 +253,21 @@ def generate_dungeon(
         if any(new_room.intersects(other_room) for other_room in rooms):
             continue
         
-        dungeon.tiles[new_room.inner] = tile_types.floor
+        x_slice, y_slice = new_room.inner
+        for x in range(x_slice.start, x_slice.stop):
+            for y in range(y_slice.start, y_slice.stop):
+                dungeon.tiles[x,y] = tile_types.new_random_floor()
 
         if len(rooms) == 0:
             player.place(*new_room.center, dungeon)
 
         else:
             for x,y in tunnle_between(rooms[-1].center, new_room.center):
-                dungeon.tiles[x,y] = tile_types.floor
+                dungeon.tiles[x,y] = tile_types.new_random_floor()
             
             center_of_last_room = new_room.center
-        
+
+
         place_entities(new_room, dungeon, engine.game_world.current_floor)
 
         dungeon.tiles[center_of_last_room] = tile_types.down_stairs
@@ -271,4 +276,3 @@ def generate_dungeon(
         rooms.append(new_room)
 
     return dungeon
-

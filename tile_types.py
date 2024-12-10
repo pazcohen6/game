@@ -1,5 +1,5 @@
 from typing import Tuple
-
+import random
 import numpy as np
 
 # Define the data type for graphical elements, including character, foreground color, and background color.
@@ -49,12 +49,12 @@ def new_tile(
 SHROUD = np.array((ord(" "), (255,255,255), (0,0,0)), dtype=graphic_dt)
 
 # Represents a floor tile in the game. It is walkable and transparent,
-floor = new_tile(
+"""floor = new_tile(
     walkable=True,
     transparent=True,
     dark=(ord(" "),(255,255,255), (50,50,150)),
     light=(ord(" "),(255,255,255), (200,180,50))
-)
+)"""
 
 # Represents a wall tile in the game. It is not walkable and not transparent,
 wall = new_tile(
@@ -69,3 +69,18 @@ down_stairs = new_tile(
     dark=(ord(">"), (0, 0, 100), (50, 50, 150)),
     light=(ord(">"), (255, 255, 255), (200, 180, 50)),
 )
+
+def new_random_floor(walkable = True, 
+                   transparent = True,
+                   dark=(ord(" "),(255,255,255), (50,50,150)),
+                   nu = 0, sigma = 10) -> new_tile:
+    R = random.gauss(nu, sigma) + 200
+    G = random.gauss(nu, sigma) + 180
+    B = random.gauss(nu, sigma) + 50
+
+    return new_tile(
+        walkable=walkable,
+        transparent=transparent,
+        dark=dark,
+        light=(ord(" "),(255,255,255),(R,G,B))
+    )
