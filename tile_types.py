@@ -48,14 +48,6 @@ def new_tile(
 # Represent unexplored, unseen tiles
 SHROUD = np.array((ord(" "), (255,255,255), (0,0,0)), dtype=graphic_dt)
 
-# Represents a floor tile in the game. It is walkable and transparent,
-"""floor = new_tile(
-    walkable=True,
-    transparent=True,
-    dark=(ord(" "),(255,255,255), (50,50,150)),
-    light=(ord(" "),(255,255,255), (200,180,50))
-)"""
-
 # Represents a wall tile in the game. It is not walkable and not transparent,
 wall = new_tile(
     walkable=False,
@@ -70,6 +62,21 @@ down_stairs = new_tile(
     light=(ord(">"), (255, 255, 255), (200, 180, 50)),
 )
 
+"""
+new_random_floor function:
+    Creates a new random floor tile with specified properties.
+
+    Parameters:
+        walkable (bool): Whether the tile is walkable.
+        transparent (bool): Whether the tile is transparent.
+        dark (Tuple[int, Tuple[int, int, int], Tuple[int, int, int]]):
+            Graphics for when the tile is not in FOV.
+        nu (float): Mean value for Gaussian random color generation.
+        sigma (float): Standard deviation for Gaussian random color generation.
+
+    Return:
+        > new_tile: A new tile object with randomized light properties.
+"""
 def new_random_floor(walkable = True, 
                    transparent = True,
                    dark=(ord(" "),(255,255,255), (50,50,150)),
