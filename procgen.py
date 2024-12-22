@@ -13,8 +13,6 @@ if TYPE_CHECKING:
     from engine import Engine
     
 
-
-
 max_items_by_floor = [
     (1,1),
     (4,2),
@@ -41,7 +39,16 @@ enemy_chances: Dict[int, List[Tuple[Entity, int]]] = {
 }
 
 """
-    TODO
+get_max_value_for_floor function:
+    Retrieves the maximum value associated with a given floor level.
+
+    Parameters:
+        max_value_by_floor (List[Tuple[int, int]]):
+            A list of tuples where each tuple contains a floor minimum and its corresponding value.
+        floor (int): The current floor level.
+
+    Return:
+        > int: The maximum value corresponding to the given floor.
 """
 def get_max_value_for_floor(
         max_value_by_floor: List[Tuple[int, int]], floor: int
@@ -57,7 +64,17 @@ def get_max_value_for_floor(
     return current_value
 
 """
-    TODO
+get_entities_at_random function:
+    Selects a random set of entities based on their weighted chances for a given floor level.
+
+    Parameters:
+        weighted_chances_by_floor (Dict[int, List[Tuple[Entity, int]]]):
+            A dictionary mapping floor levels to a list of entities and their weighted chances.
+        number_of_entities (int): The number of entities to randomly select.
+        floor (int): The current floor level.
+
+    Return:
+        > List[Entity]: A list of randomly selected entities based on their weighted chances.
 """
 def get_entities_at_random(
         weighted_chances_by_floor: Dict[int, List[Tuple[Entity, int]]],
@@ -266,7 +283,6 @@ def generate_dungeon(
                 dungeon.tiles[x,y] = tile_types.new_random_floor()
             
             center_of_last_room = new_room.center
-
 
         place_entities(new_room, dungeon, engine.game_world.current_floor)
 

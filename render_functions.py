@@ -60,7 +60,16 @@ def render_bar(
         x=1, y=52, string=f"HP: {current_value}/{maximum_value}", fg=color.bar_text
     )
 """
-    TODO: Render the level the player is currently on, at the given location.
+render_dungeon_level function:
+    Renders the current dungeon level at a specified location on the console.
+
+    Parameters:
+        console (Console): The console object used for rendering.
+        dungeon_level (int): The current dungeon level to display.
+        location (Tuple[int, int]): The (x, y) coordinates where the dungeon level will be displayed.
+
+    Return:
+        > None: This function does not return anything.
 """
 def render_dungeon_level(
         console: Console, dungeon_level: int, location: Tuple[int,int]
