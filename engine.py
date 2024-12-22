@@ -1,20 +1,19 @@
 from __future__ import annotations
 
+import lzma
+import pickle
 from typing import TYPE_CHECKING
 
-from tcod.context import Context
 from tcod.console import Console
 from tcod.map import compute_fov
 
 import exceptions
-from input_handlers import MainGameEventHandler
 from message_log import MessageLog
-from render_functions import render_bar, render_names_at_mouse_location
+import render_functions
 
 if TYPE_CHECKING:
     from entity import Actor
-    from game_map import GameMap
-    from input_handlers import EventHandler
+    from game_map import GameMap, GameWorld
 
 """
 Engine class:
@@ -33,6 +32,8 @@ Attributes:
         The current mouse location on the screen.
     player (Actor):
         The player character entity in the game.
+    game_world (GameWorld):
+        The game world, responsible for generating floors and managing the dungeon's state.
 
 Methods:
     handle_enemy_turns:
@@ -52,20 +53,29 @@ Methods:
 
     render:
         Renders the current game state to the provided console. This includes
-        rendering the game map, message log, player health bar, and names of entities
-        at the mouse location.
+        rendering the game map, message log, player health bar, dungeon level,
+        and names of entities at the mouse location.
 
         Parameters:
             console (Console): The console to which the game state is rendered.
 
         Return:
             > None
+
+    save_as:
+        Compresses and saves the current engine state to a file.
+
+        Parameters:
+            filename (str): The name of the file where the engine state will be saved.
+
+        Return:
+            > None
 """
 class Engine:
     game_map: GameMap
+    game_world: GameWorld
 
     def __init__(self, player: Actor):
-        self.event_handler: EventHandler = MainGameEventHandler(self)
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         self.player = player
@@ -92,11 +102,28 @@ class Engine:
         self.game_map.render(console)
 
         self.message_log.render(console=console, x= 21, y= 53, width= 50 ,height= 5)
-        render_bar(
+        render_functions.render_bar(
             console= console,
             current_value= self.player.fighter.hp,
             maximum_value= self.player.fighter.max_hp,
             total_width= 20,
         )
 
-        render_names_at_mouse_location(console= console, x = 21, y= 52, engine= self)
+        render_functions.render_dungeon_level(
+            console=console,
+            dungeon_level= self.game_world.current_floor,
+            location= (0,56)
+        )
+
+        render_functions.render_names_at_mouse_location(
+            console = console,
+            x = 21,
+            y = 54,
+            engine = self
+        )
+
+    def save_as(self, filename: str) -> None:
+        save_data = lzma.compress(pickle.dumps(self))
+        with open(filename, "wb") as f:
+            f.write(save_data)
+

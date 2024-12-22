@@ -1,13 +1,107 @@
-from typing import Iterator, Tuple, List, TYPE_CHECKING
+from typing import Dict, Iterator, Tuple, List, TYPE_CHECKING
 import random
 import tcod
+from itertools import product
 
 import entity_factories
 from game_map import GameMap
 import tile_types
 
+from entity import Entity
+
 if TYPE_CHECKING:
     from engine import Engine
+    
+
+max_items_by_floor = [
+    (1,1),
+    (4,2),
+]
+
+max_monsters_by_floor = [
+    (1,2),
+    (4,3),
+    (6,5),
+]
+
+item_chances: Dict[int, List[Tuple[Entity, int]]] = {
+    0: [(entity_factories.health_potion, 35)],
+    2: [(entity_factories.confusion_scroll, 10)],
+    4: [(entity_factories.lightning_scroll, 25), (entity_factories.sword, 5)],
+    5: [(entity_factories.health_potion, 50)],
+    6: [(entity_factories.firecube_scroll, 25), (entity_factories.chain_mail, 15), (entity_factories.sword, 5)]
+}
+
+enemy_chances: Dict[int, List[Tuple[Entity, int]]] = {
+    0: [(entity_factories.orc, 80)],
+    3: [(entity_factories.troll, 15)],
+    5: [(entity_factories.troll, 30)],
+    7: [(entity_factories.troll, 60)]
+}
+
+"""
+get_max_value_for_floor function:
+    Retrieves the maximum value associated with a given floor level.
+
+    Parameters:
+        max_value_by_floor (List[Tuple[int, int]]):
+            A list of tuples where each tuple contains a floor minimum and its corresponding value.
+        floor (int): The current floor level.
+
+    Return:
+        > int: The maximum value corresponding to the given floor.
+"""
+def get_max_value_for_floor(
+        max_value_by_floor: List[Tuple[int, int]], floor: int
+) -> int:
+    current_value = 0
+
+    for floor_minimimum, value in max_value_by_floor:
+        if floor_minimimum > floor:
+            break
+        else:
+            current_value = value
+
+    return current_value
+
+"""
+get_entities_at_random function:
+    Selects a random set of entities based on their weighted chances for a given floor level.
+
+    Parameters:
+        weighted_chances_by_floor (Dict[int, List[Tuple[Entity, int]]]):
+            A dictionary mapping floor levels to a list of entities and their weighted chances.
+        number_of_entities (int): The number of entities to randomly select.
+        floor (int): The current floor level.
+
+    Return:
+        > List[Entity]: A list of randomly selected entities based on their weighted chances.
+"""
+def get_entities_at_random(
+        weighted_chances_by_floor: Dict[int, List[Tuple[Entity, int]]],
+        number_of_entities: int,
+        floor: int,
+) -> List[Entity]:
+    entity_weighted_chances = {}
+
+    for key, values in weighted_chances_by_floor.items():
+        if key > floor:
+            break
+        else:
+            for value in values:
+                entity = value[0]
+                weighted_chance = value[1]
+
+                entity_weighted_chances[entity] = weighted_chance
+    
+    entities = list(entity_weighted_chances.keys())
+    entity_weighted_chances_values = list(entity_weighted_chances.values())
+
+    chosen_entities = random.choices(
+        entities, weights = entity_weighted_chances_values, k = number_of_entities
+    )
+
+    return chosen_entities
 
 """
 RectangularRoom class:
@@ -46,7 +140,7 @@ Methods:
             > bool: True if this room intersects with the other room, False otherwise.
 """
 class RectangularRoom:
-    def __init__(self, x:int, y:int, width:int, height:int) :
+    def __init__(self, x: int, y: int, width: int, height: int) :
         self.x1 = x
         self.y1 = y
         self.x2 = x + width
@@ -105,43 +199,32 @@ place_entities function:
     Input:
         > room (RectangularRoom): The room in which to place the monsters.
         > dungeon (GameMap): The game map where the room is located.
-        > maximum_monster (int): The maximum number of monsters to place in the room.
-        > maximum_item (int): The maximum number of items to place in the room.
+        > floor_number (int): The player current floor number.
 
     Return:
         > None
 """
-def place_entities(
-        room:RectangularRoom, dungeon:GameMap, maximum_monster:int, maximum_items: int,
-) -> None:
-    number_of_monsters = random.randint(0, maximum_monster)
-    number_of_items = random.randint(0, maximum_items)
+def place_entities(room:RectangularRoom, dungeon:GameMap, floor_number: int) -> None:
+    number_of_monsters = random.randint(
+        0, get_max_value_for_floor(max_monsters_by_floor, floor_number)
+    )
+    number_of_items = random.randint(
+        0, get_max_value_for_floor(max_items_by_floor, floor_number)
+    )
 
-    for i in range(number_of_monsters):
-        x = random.randint(room.x1 + 1, room.x2 - 1)
-        y = random.randint(room.y1 + 1, room.y2 - 1)
+    monsters : List[Entity] = get_entities_at_random(
+        enemy_chances, number_of_monsters, floor_number
+    )
+    items : List[Entity] = get_entities_at_random(
+        item_chances, number_of_items, floor_number
+    )
 
-        if not any(entity.x ==x and entity.y==y for entity in dungeon.entities):
-            if random.random() < 0.8:
-                entity_factories.orc.spawn(dungeon, x, y)
-            else:
-                entity_factories.troll.spawn(dungeon, x, y)
-
-    for i in range(number_of_items):
+    for entity in monsters + items:
         x = random.randint(room.x1 + 1, room.x2 - 1)
         y = random.randint(room.y1 + 1, room.y2 - 1)
         
         if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
-            item_chance = random.random()
-            
-            if item_chance < 0.5:
-                entity_factories.health_potion.spawn(dungeon, x, y)
-            if item_chance < 0.7:
-                entity_factories.firecube_scroll.spawn(dungeon, x, y)
-            elif item_chance < 0.9:
-                entity_factories.confusion_scroll.spawn(dungeon, x, y)
-            else:
-                entity_factories.lightning_scroll.spawn(dungeon, x, y)
+            entity.spawn(dungeon, x, y)
 
 """
 generate_dungeon function:
@@ -154,8 +237,6 @@ generate_dungeon function:
         > room_max_size (int): The maximum width/height of a room.
         > map_width (int): The width of the dungeon map.
         > map_height (int): The height of the dungeon map.
-        > max_monsters_per_room (int): The maximum number of monsters per room.
-        > max_items_per_room (int): The maximum number of items per room.
         > engine (Engine): The game engine, including the player entity.
 
     Return:
@@ -167,8 +248,7 @@ def generate_dungeon(
         room_max_size:int,
         map_width:int,
         map_height:int,
-        max_monsters_per_room: int,
-        max_items_per_room: int,
+
         engine: 'Engine',
     ) -> GameMap:
     
@@ -176,6 +256,8 @@ def generate_dungeon(
     dungeon = GameMap(engine, map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
+
+    center_of_last_room = (0, 0)
 
     for r in range(max_rooms):
         room_width = random.randint(room_min_size, room_max_size)
@@ -189,18 +271,25 @@ def generate_dungeon(
         if any(new_room.intersects(other_room) for other_room in rooms):
             continue
         
-        dungeon.tiles[new_room.inner] = tile_types.floor
+        x_slice, y_slice = new_room.inner
+        for x in range(x_slice.start, x_slice.stop):
+            for y in range(y_slice.start, y_slice.stop):
+                dungeon.tiles[x,y] = tile_types.new_random_floor()
 
         if len(rooms) == 0:
             player.place(*new_room.center, dungeon)
 
         else:
             for x,y in tunnle_between(rooms[-1].center, new_room.center):
-                dungeon.tiles[x,y] = tile_types.floor
-        
-        place_entities(new_room,dungeon,max_monsters_per_room, max_items_per_room)
+                dungeon.tiles[x,y] = tile_types.new_random_floor()
+            
+            center_of_last_room = new_room.center
+
+        place_entities(new_room, dungeon, engine.game_world.current_floor)
+
+        dungeon.tiles[center_of_last_room] = tile_types.down_stairs
+        dungeon.downstairs_location = center_of_last_room
 
         rooms.append(new_room)
 
     return dungeon
-

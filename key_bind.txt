@@ -19,5 +19,5 @@ scroll massag log by 10: page up / page down
 pickup item : g
 inventory : i
 drop item : d
-select tile : / or / (numd divide)
+select tile : / or / (numpad divide)
 use stairs : = or u

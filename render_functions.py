@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import Tuple ,TYPE_CHECKING
 
 import color
 
@@ -49,16 +49,33 @@ def render_bar(
         ) -> None:
     bar_width = int(float(current_value) / maximum_value * total_width)
 
-    console.draw_rect(x=0, y=52, width=total_width, height=1, ch=1, bg=color.bar_empty)
+    console.draw_rect(x=0, y=53, width=total_width, height=1, ch=1, bg=color.bar_empty)
 
     if bar_width > 0:
         console.draw_rect(
-            x=0, y=52, width=bar_width, height=1, ch=1, bg=color.bar_filled
+            x=0, y=53, width=bar_width, height=1, ch=1, bg=color.bar_filled
         )
 
     console.print(
-        x=1, y=52, string=f"HP: {current_value}/{maximum_value}", fg=color.bar_text
+        x=1, y=53, string=f"HP: {current_value}/{maximum_value}", fg=color.bar_text
     )
+"""
+render_dungeon_level function:
+    Renders the current dungeon level at a specified location on the console.
+
+    Parameters:
+        console (Console): The console object used for rendering.
+        dungeon_level (int): The current dungeon level to display.
+        location (Tuple[int, int]): The (x, y) coordinates where the dungeon level will be displayed.
+
+    Return:
+        > None: This function does not return anything.
+"""
+def render_dungeon_level(
+        console: Console, dungeon_level: int, location: Tuple[int,int]
+) -> None:
+    x,y = location
+    console.print(x=x, y=y, string=f'Dungeon level: {dungeon_level}')
 
 """
 render_names_at_mouse_location function:

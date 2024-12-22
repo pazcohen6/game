@@ -53,7 +53,17 @@ class Action:
         """
         raise NotImplementedError()
 
-#TODO
+"""
+PickupAction class (inherits from Action):
+    An action that allows the entity to pick up an item from the game map and
+    add it to its inventory, if there is space.
+
+Methods:
+    perform:
+        Checks if there is an item at the entity's location. If an item is present
+        and there is space in the inventory, the item is picked up. Otherwise, an
+        exception is raised if no item is found or the inventory is full.
+"""
 class PickupAction(Action):
     """Pickup an item and add it to the inventory, if there is room for it."""
     def __init__(self, entity: Actor) -> None:
@@ -77,7 +87,30 @@ class PickupAction(Action):
                 return
         raise exceptions.Impossible("There is nothing to pick up")
     
-#TODO
+"""
+ItemAction class (inherits from Action):
+    An action that represents using an item, potentially targeting a specific
+    location or actor on the game map.
+
+Attributes:
+    item (Item):
+        The item to be used.
+    target_xy (Optional[Tuple[int, int]]):
+        The (x, y) coordinates of the target location for the item's effect. Defaults
+        to the entity's current position.
+
+Methods:
+    target_actor (property):
+        Returns the actor (if any) at the target location.
+
+        Return:
+            > Optional[Actor]: The actor at the target location, or None if there is no actor.
+
+    perform:
+        Activates the item's consumable ability and passes context about the action
+        (such as the actor performing it and the target location).
+"""
+
 class ItemAction(Action):
     def __init__(
             self, entity:Actor, item: Item, target_xy: Optional[Tuple[int,int]] = None
@@ -95,15 +128,49 @@ class ItemAction(Action):
 
     def perform(self) -> None:
         """Invoke the items ability, this action will be given to provide context."""
-        self.item.consumable.activate(self)
+        if self.item.consumable:
+            self.item.consumable.activate(self)
 
 """
-    TODO
+DropItem class (inherits from ItemAction):
+    An action that allows the entity to drop an item from its inventory onto the
+    game map at the entity's current location.
+
+Methods:
+    perform:
+        Removes the specified item from the entity's inventory and places it at
+        the entity's current location.
 """
+
 class DropItem(ItemAction):
     def perform(self) -> None:
+        if self.entity.equipment.item_is_equipped(self.item):
+            self.entity.equipment.toggle_equip(self.item)
+        
         self.entity.inventory.drop(self.item)
-    
+
+"""
+EquipAction class (inherits from Action):
+    An action that allows the entity to equip or unequip an item from its equipment.
+
+Attributes:
+    item (Item):
+        The item to be equipped or unequipped.
+
+Methods:
+    perform:
+        Toggles the equipped state of the item, equipping it if it is currently unequipped
+        or unequipping it if it is currently equipped.
+"""
+class EquipAction(Action):
+    def __init__(self, entity: Actor, item: Item):
+        super().__init__(entity)
+
+        self.item = item
+
+    def perform(self) -> None:
+        self.entity.equipment.toggle_equip(self.item)
+
 """
 WaitAction class (inherits from Action):
     An action that causes the entity to do nothing for a turn.
@@ -116,6 +183,26 @@ class WaitAction(Action):
     def perform(self) -> None:
         pass
 
+"""
+TakeStairsAction class (inherits from Action):
+    An action that allows the entity to take the stairs at its current location,
+    transitioning to the next floor if stairs are present.
+
+Methods:
+    perform:
+        Checks if the entity is on a staircase. If so, generates the next floor
+        and transitions the entity down the stairs. Raises an exception if no stairs are found.
+"""
+class TakeStairsAction(Action):
+    def perform(self) -> None:
+        if (self.entity.x, self.entity.y) == self.engine.game_map.downstairs_location:
+            self.engine.game_world.generate_floor()
+            self.engine.message_log.add_message(
+                "You descend the staircase.", color.descend
+            )
+        else:
+            raise exceptions.Impossible("There are no stairs here.")
+        
 """
 ActionWithDirection class (inherits from Action):
     A base class for actions that require a direction, such as movement or attacking.
@@ -161,7 +248,7 @@ class ActionWithDirection(Action):
     
     @property
     def blocking_entity(self) -> None:
-        return self.engine.game_map.get_blocking_entity_at_location(*self.dest_xy)
+        return self.engine.game_map.get_blocking_ntity_at_location(*self.dest_xy)
     @property
     def target_actor(self) -> Optional[Actor]:
         return self.engine.game_map.get_actor_at_location(*self.dest_xy)
@@ -228,7 +315,7 @@ class MovementAction(ActionWithDirection):
         if not self.engine.game_map.tiles['walkable'][dest_x, dest_y]:
             # Destination is blocked by a tile.
             raise exceptions.Impossible("That way is blocked.")
-        if self.engine.game_map.get_blocking_entity_at_location(dest_x, dest_y):
+        if self.engine.game_map.get_blocking_ntity_at_location(dest_x, dest_y):
             # Destination is blocked by an entity.
             raise exceptions.Impossible("That way is blocked.")
         self.entity.move(self.dx, self.dy)
@@ -254,4 +341,3 @@ class BumpAction(ActionWithDirection):
         
         else:
             return MovementAction(self.entity ,self.dx, self.dy).perform()
-                

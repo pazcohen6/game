@@ -1,17 +1,19 @@
 from __future__ import annotations
 import copy
-from typing import List, Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
+import math
+from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 
 #from game_map import GameMap
 from render_order import RendrOrder
 
-from components.ailment import Ailment
-
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.consumable import Consumable
+    from components.equipment import Equipment
+    from components.equippable import Equippable
     from components.fighter import Fighter
     from components.inventory import Inventory
+    from components.level import Level
     from game_map import GameMap
 
 T = TypeVar("T", bound="Entity")
@@ -39,6 +41,8 @@ Attributes:
         Indicates whether the entity blocks movement on the map.
     render_order (RendrOrder):
         The rendering order of the entity, which determines the drawing order on the map.
+    level (Level):
+        The level component for the entity, which tracks the entity's level, experience, and progression.
 
 Methods:
     __init__:
@@ -55,7 +59,11 @@ Methods:
             blocks_movement (bool): Whether the entity blocks movement.
             render_order (RendrOrder): The rendering order of the entity.
     
-    gamemap: TODO
+    gamemap (property):
+        Retrieves the game map instance the entity is associated with.
+        
+        Returns:
+            GameMap: The game map where the entity is located.
 
     spawn:
         Creates a clone of the entity and places it at a new position on a new game map.
@@ -74,12 +82,21 @@ Methods:
 
         Parameters:
             x (int): The new x-coordinate position.
-            y (int): The new y-coordinate position.
+            y (int): The new game map instance.
             gamemap (Optional[GameMap]): The new game map instance.
 
-    distance : TODO
+    distance:
+        Calculates the distance between the current entity and the provided (x, y) coordinates.
+
+        Parameters:
+            x (int): The x-coordinate of the target position.
+            y (int): The y-coordinate of the target position.
+
+        Returns:
+            float: The calculated distance.
+
     move:
-        Updates the position of the entity based on the provided movement offsets.
+        Updates the entity's position based on movement offsets.
 
         Parameters:
             dx (int): The movement offset in the x direction.
@@ -155,7 +172,12 @@ Attributes:
         provided AI class.
     fighter (Fighter):
         The combat statistics of the actor, including health, defense, and power.
-    inventory : FIXME
+    inventory (Inventory):
+        The inventory of the actor, containing items the actor can carry.
+    level (Level):
+        The level component of the actor, which tracks experience, level-ups, and stat progression.
+    equipment (Equipment):
+        The equipment component of the actor, which handles equippable items like weapons and armor.
 
 Methods:
     __init__:
@@ -168,17 +190,18 @@ Methods:
             color (Tuple[int, int, int]): The RGB color.
             name (str): The name of the actor.
             ai_cls (Type[BaseAI]): The AI class for the actor.
+            equipment (Equipment): The equipment component of the actor.
             fighter (Fighter): The combat statistics of the actor.
-            inventory (Inventory): TODO:
+            inventory (Inventory): The actor's inventory.
+            level (Level): The level component of the actor.
 
-    is_alive:
-        Returns whether the actor is alive based on the presence of AI.
+    is_alive (property):
+        Checks if the actor is alive based on whether it has AI.
 
         Returns:
-            bool: True if the actor has AI and is thus considered alive.
+            bool: True if the actor has AI and is considered alive, otherwise False.
 """
 class Actor(Entity):
-
     def __init__(
        self,
        *,
@@ -188,8 +211,10 @@ class Actor(Entity):
        color: Tuple[int, int, int] = (255, 255, 255),
        name: str = "<Unnamed>",
        ai_cls: Type[BaseAI],
+       equipment: Equipment,
        fighter: Fighter,
        inventory: Inventory,
+       level: Level,
     ):
         super().__init__(
            x=x,
@@ -202,6 +227,9 @@ class Actor(Entity):
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)
+
+        self.equipment: Equipment = equipment
+        self.equipment.parent = self
        
         self.fighter = fighter
         self.fighter.parent = self
@@ -209,17 +237,39 @@ class Actor(Entity):
         self.inventory = inventory
         self.inventory.parent = self
 
+        self.level = level
+        self.level.parent = self
+       
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
         return bool(self.ai)
-    
-    # TODO
-    def move(self, dx: int, dy: int) -> None:
-        for ailment in self.fighter.ailments:
-            ailment.perform()
-        return super().move(dx, dy)
-   
+
+"""
+Item class:
+    Represents an item that can be picked up and used in the game. Inherits from the
+    Entity class and includes additional functionality for consumables and equippables.
+
+Attributes:
+    consumable (Optional[Consumable]):
+        The consumable component, defining the item's effect when used.
+    equippable (Optional[Equippable]):
+        The equippable component, defining the item's effect when equipped.
+
+Methods:
+    __init__:
+        Initializes an item with position, symbol, color, name, and optional 
+        consumable and equippable components.
+
+        Parameters:
+            x (int): The x-coordinate.
+            y (int): The y-coordinate.
+            char (str): The character symbol representing the item.
+            color (Tuple[int, int, int]): The item's RGB color.
+            name (str): The name of the item.
+            consumable (Optional[Consumable]): The consumable component of the item.
+            equippable (Optional[Equippable]): The equippable component of the item.
+"""
 class Item(Entity):
     def __init__(
             self,
@@ -229,7 +279,8 @@ class Item(Entity):
             char: str = "?", 
             color: Tuple[int] = (255, 255, 255), 
             name: str = "<Unnamed>", 
-            consumable: Consumable
+            consumable: Optional[Consumable] = None,
+            equippable: Optional[Equippable] = None,
     ):
         super().__init__(
             x=x,
@@ -242,6 +293,11 @@ class Item(Entity):
         )
 
         self.consumable = consumable
-        self.consumable.parent = self
-
         
+        if self.consumable:
+            self.consumable.parent = self
+
+        self.equippable = equippable
+
+        if self.equippable:
+            self.equippable.parent = self

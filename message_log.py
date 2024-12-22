@@ -18,12 +18,14 @@ Attributes:
         The number of times this message has been stacked.
 
 Methods: 
-    full_text: #TODO
+    full_text:
         The full text of this message, including the count if necessary.
 
         Return:
-            > str
+            > str: The plain text of the message, and if the count is more than 1,
+                   includes the count in the format "text x(count)".
 """
+
 class Message:
     def __init__(self, text: str, fg: Tuple[int,int,int]):
         self.plain_text = text
@@ -72,8 +74,16 @@ Methods:
 
         Return:
             > None
-    wrap: Return a wrapped text message.
-        #TODO
+
+    wrap:
+        A static method to wrap text that is too long for the console's width.
+
+        Parameters:
+            string (str): The text string to be wrapped.
+            width (int): The width of the area to wrap within.
+
+        Return:
+            > Iterable[str]: Wrapped lines of text.
 
     render_messages:
         Render the provided messages onto the console, starting from the last message
@@ -89,7 +99,7 @@ Methods:
 
         Return:
             > None
-"""    
+""" 
 class MessageLog:
     def __init__(self) -> None :
         self.messages: List[Message] = []
@@ -139,8 +149,8 @@ class MessageLog:
         """
         y_offset = height - 1
 
-        for message in messages[::-1]:
-            for line in list(cls.wrap(message.full_text, width))[::-1]:
+        for message in reversed(messages):
+            for line in reversed(list(cls.wrap(message.full_text, width))):
                 console.print(x= x, y= y + y_offset, string = line, fg = message.fg)
                 y_offset -= 1
                 if y_offset < 0 :

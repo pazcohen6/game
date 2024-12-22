@@ -18,8 +18,12 @@ Attributes:
         The entity instance that owns this component.
 
 Methods:
-    gamemap: TODO
+    gamemap:
+        A property that returns the game map associated with the component's entity.
 
+        Return:
+            > GameMap: The game map the entity is located in.
+    
     engine:
         A property that returns the game engine associated with this component's entity.
         This allows components to interact with the broader game environment.
