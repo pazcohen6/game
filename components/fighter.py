@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 import color
 from components.base_component import BaseComponent
+from input_handlers import GameOverEventHandler
 from render_order import RendrOrder
 
 if TYPE_CHECKING:
     from entity import Actor
-    
+    from components.ailment import Ailment
 """
 Fighter class:
     A component that adds combat-related attributes and behavior to an entity,
@@ -22,10 +23,10 @@ Attributes:
         The maximum health points for the entity.
     _hp (int):
         The current health points for the entity.
-    base_defense (int):
-        The base defense value that reduces incoming damage.
-    base_power (int):
-        The attack base power of the entity.
+    defense (int):
+        The defense value that reduces incoming damage.
+    power (int):
+        The attack power of the entity.
 
 Methods:
     hp (property):
@@ -36,30 +37,6 @@ Methods:
         Return:
             > int: The current health points of the entity.
 
-    defense (property):
-        Calculates the total defense, including bonuses from equipment.
-
-        Return:
-            > int: The sum of base defense and equipment defense bonus.
-
-    power (property):
-        Calculates the total power, including bonuses from equipment.
-
-        Return:
-            > int: The sum of base power and equipment power bonus.
-
-    defense_bonus (property):
-        Retrieves the defense bonus from equipped items.
-
-        Return:
-            > int: Defense bonus from equipment or 0 if no equipment.
-
-    power_bonus (property):
-        Retrieves the power bonus from equipped items.
-
-        Return:
-            > int: Power bonus from equipment or 0 if no equipment.            
-
     die:
         Handles the death of the entity. Updates the entity's state to represent
         a dead body, logs a death message, and switches the player to the game
@@ -68,34 +45,19 @@ Methods:
         Return:
             > None
 
-    heal:
-        Restores health points to the entity, up to the maximum HP. Returns the
-        amount of health recovered.
-
-        Input:
-            > amount (int): The amount of health to restore.
-
-        Return:
-            > int: The amount of HP recovered.
-
-    take_damage:
-        Reduces the entity's current health points by the given amount and checks
-        if the entity should die.
-
-        Input:
-            > amount (int): The amount of damage taken.
-
-        Return:
-            > None
+    heal: TODO
+    take_damage: TODO
 """
 class Fighter(BaseComponent):
     parent: Actor
+    ailments : List[Ailment]
 
-    def __init__(self, hp: int, base_defense: int, base_power: int):
+    def __init__(self, hp: int, defense: int, power: int):
         self.max_hp = hp
         self._hp = hp
-        self.base_defense = base_defense
-        self.base_power = base_power
+        self.defense = defense
+        self.power = power
+        self.ailments = []
 
     @property
     def hp(self) -> int:
@@ -108,32 +70,12 @@ class Fighter(BaseComponent):
         if self._hp == 0 and self.parent.ai:
             self.die()
 
-    @property
-    def defense(self) -> int:
-        return self.base_defense + self.defense_bonus
-    
-    @property
-    def power(self) -> int:
-        return self.base_power + self.power_bonus
-    
-    @property
-    def defense_bonus(self) -> int:
-        if self.parent.equipment:
-            return self.parent.equipment.defense_bonus
-        else:
-            return 0
-        
-    @property
-    def power_bonus(self) -> int:
-        if self.parent.equipment:
-            return self.parent.equipment.power_bonus
-        else:
-            return 0
-
     def die(self) -> None:
         if self.engine.player is self.parent:
             death_massage = "You Died"
             death_massage_color = color.player_die
+            self.engine.event_handler = GameOverEventHandler(self.engine)
+
         else:
             death_massage = f"you've defeated {self.parent.name}"
             death_massage_color = color.enemy_die
@@ -146,8 +88,6 @@ class Fighter(BaseComponent):
         self.parent.render_order = RendrOrder.CORPSE
 
         self.engine.message_log.add_message(death_massage, death_massage_color)
-
-        self.engine.player.level.add_xp(self.parent.level.xp_given)
 
     def heal(self, amount: int) -> int:
         if self.hp == self.max_hp:

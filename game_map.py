@@ -1,7 +1,6 @@
 from __future__ import annotations
 from typing import Iterable, Iterator, Optional, TYPE_CHECKING
 
-import random
 import numpy as np
 from tcod.console import Console
 
@@ -32,8 +31,6 @@ Attributes:
         A 2D array indicating which tiles are currently visible.
     explored (np.ndarray):
         A 2D array indicating which tiles have been explored.
-    downstairs_location (Tuple[int, int]):
-        The (x, y) coordinates of the stairs leading to the next floor.
 
 Methods:
     __init__:
@@ -46,22 +43,17 @@ Methods:
             height (int): The height of the map.
             entities (Iterable[Entity]): Initial entities to place on the map.
 
-    gamemap (property):
-        Returns the GameMap instance.
+    gamemap: TODO
 
-    actors (property):
+    actors (Iterator[Actor]):
         Iterates over living actors on the map.
         
         Yields:
             Actor: Each living actor on the map.
     
-    items (property):
-        Iterates over items on the map.
-        
-        Yields:
-            Item: Each item on the map.
+    items : TODO
 
-    get_blocking_entity_at_location:
+    get_blocking_ntity_at_location:
         Retrieves an entity at a specific location that blocks movement.
 
         Parameters:
@@ -110,8 +102,6 @@ class GameMap:
         self.visible = np.full((width, height), fill_value=False, order="F")
         self.explored = np.full((width, height), fill_value = False, order='F')
 
-        self.downstairs_location = (0,0)
-
     @property
     def gamemap(self) -> GameMap:
         return self
@@ -128,7 +118,7 @@ class GameMap:
     def items(self) -> Iterator[Item]:
         yield from (entity for entity in self.entities if isinstance(entity, Item))
 
-    def get_blocking_ntity_at_location(self, location_x : int, location_y : int) ->Optional[Entity]:
+    def get_blocking_entity_at_location(self, location_x : int, location_y : int) ->Optional[Entity]:
         
         for entity in self.entities:
             if (entity.blocks_movement and
@@ -163,85 +153,3 @@ class GameMap:
                 console.print(
                     x=entity.x, y=entity.y, string=entity.char, fg=entity.color
                 )
-
-"""
-GameWorld class:
-    Manages the settings and state of the game world. Handles floor generation,
-    including room size, monster and item limits, and current floor tracking.
-
-Attributes:
-    engine (Engine):
-        The engine instance controlling the game. Used for interacting with the game state.
-    map_width (int):
-        The width of the game map.
-    map_height (int):
-        The height of the game map.
-    max_rooms (int):
-        The maximum number of rooms that can be generated on each floor.
-    room_min_size (int):
-        The minimum size for rooms generated on the map.
-    room_max_size (int):
-        The maximum size for rooms generated on the map.
-    current_floor (int):
-        Tracks the current floor number in the dungeon.
-
-Methods:
-    __init__:
-        Initializes a new GameWorld instance with the specified settings.
-
-        Parameters:
-            engine (Engine): The engine instance controlling the game.
-            map_width (int): The width of the game map.
-            map_height (int): The height of the game map.
-            max_rooms (int): The maximum number of rooms per floor.
-            room_min_size (int): The minimum size for generated rooms.
-            room_max_size (int): The maximum size for generated rooms.
-            current_floor (int): The starting floor number (default is 0).
-
-    generate_floor:
-        Generates a new floor, including rooms, monsters, and items.
-        Increases the current floor count by one and sets the newly generated
-        map as the active game map.
-
-        Returns:
-            None
-"""
-class GameWorld:
-    def __init__(
-            self,
-            *,
-            engine: Engine,
-            map_width: int,
-            map_height: int,
-            max_rooms: int,
-            room_min_size: int,
-            room_max_size: int,
-            current_floor: int= 0,
-        ):
-
-        self.engine = engine
-
-        self.map_width = map_width
-        self.map_height = map_height
-
-        self.max_rooms = max_rooms
-
-        self.room_min_size = room_min_size
-        self.room_max_size = room_max_size
-
-        self.current_floor = current_floor
-    
-    def generate_floor(self) -> None:
-        from procgen import generate_dungeon
-
-        self.current_floor += 1
-
-        self.engine.game_map = generate_dungeon(
-            max_rooms= self.max_rooms,
-            room_min_size= self.room_min_size,
-            room_max_size= self.room_max_size,
-            map_width= self.map_width,
-            map_height= self.map_height,
-            engine= self.engine,
-        )
-        
