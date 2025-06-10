@@ -118,7 +118,7 @@ class Engine:
         render_functions.render_names_at_mouse_location(
             console = console,
             x = 21,
-            y = 54,
+            y = 52,
             engine = self
         )
 

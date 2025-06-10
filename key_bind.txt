@@ -1,6 +1,8 @@
 python minimum version 3.6
 tcod minimum version 
 
+credit to : https://rogueliketutorials.com/tutorials/tcod/v2/
+
 keybind :
 
 moment in 8 directions :
@@ -21,3 +23,4 @@ inventory : i
 drop item : d
 select tile : / or / (numpad divide)
 use stairs : = or u
+character information : c
