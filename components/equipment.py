@@ -33,6 +33,12 @@ Methods:
         Return:
             > int: Sum of power bonuses from weapon and armor.
 
+    critical_chance_bonus:
+        Calculates the total critical chance bonus from equipped items.
+
+        Return:
+            > int: Sum of critical chance bonuses from weapon and armor.
+
     item_is_equipped:
         Checks if a given item is currently equipped.
 
@@ -120,7 +126,16 @@ class Equipment(BaseComponent):
             bonus += self.armor.equippable.power_bonus
 
         return bonus
-    
+    @property
+    def critical_chance_bonus(self) -> int:
+        bonus = 0
+        if self.weapon is not None and self.weapon.equippable is not None:
+            bonus += self.weapon.equippable.critical_chance_bonus
+
+        if self.armor is not None and self.armor.equippable is not None:
+            bonus += self.armor.equippable.critical_chance_bonus
+        return bonus
+
     def item_is_equipped(self, item: Item) -> bool:
         return self.weapon == item or self.armor == item
     

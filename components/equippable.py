@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 
 """
 Equippable class:
-    Represents an equippable item that provides bonuses to an actor's power and defense.
+    Represents an equippable item that provides bonuses to an actor's power, defense, and critical hit chance.
 
 Attributes:
     parent (Item):
@@ -21,10 +21,18 @@ Attributes:
         The power bonus provided by the equippable item.
     defense_bonus (int):
         The defense bonus provided by the equippable item.
+    critical_chance_bonus (int):
+        The critical hit chance bonus provided by the equippable item.
 
 Methods:
     __init__:
-        Initializes an equippable item with type, power bonus, and defense bonus.
+        Initializes an equippable item with type, power bonus, defense bonus, and critical chance bonus.
+
+        Parameters:
+            equipment_type (EquipmentType): The type of equipment (e.g., weapon, armor).
+            power_bonus (int): The power bonus this item provides (default is 0).
+            critical_chance_bonus (int): The critical hit chance bonus this item provides (default is 0).
+            defense_bonus (int): The defense bonus this item provides (default is 0).
 """
 class Equippable(BaseComponent):
     parent: Item
@@ -33,12 +41,14 @@ class Equippable(BaseComponent):
             self,
             equipment_type: EquipmentType,
             power_bonus: int = 0,
+            critical_chance_bonus: int = 0,
             defense_bonus: int = 0,
         ):
             self.equipment_type = equipment_type
 
             self.power_bonus = power_bonus
             self.defense_bonus = defense_bonus
+            self.critical_chance_bonus = critical_chance_bonus
             
 """
 Dagger class:

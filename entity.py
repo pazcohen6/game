@@ -4,7 +4,7 @@ import math
 from typing import Optional, Tuple, Type, TypeVar, TYPE_CHECKING, Union
 
 #from game_map import GameMap
-from render_order import RendrOrder
+from render_order import RenderOrder
 
 if TYPE_CHECKING:
     from components.ai import BaseAI
@@ -115,7 +115,7 @@ class Entity :
             color: Tuple[int, int, int] = (255, 255, 255),
             name: str = "<Unnamed>",
             blocks_movement: bool = False,
-            render_order: RendrOrder = RendrOrder.CORPSE
+            render_order: RenderOrder = RenderOrder.CORPSE
     ):
         self.x = x
         self.y = y
@@ -223,7 +223,7 @@ class Actor(Entity):
            color=color,
            name=name,
            blocks_movement=True,
-           render_order= RendrOrder.ACTOR,
+           render_order= RenderOrder.ACTOR,
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)
@@ -289,7 +289,7 @@ class Item(Entity):
             color=color,
             name=name,
             blocks_movement=False,
-            render_order=RendrOrder.ITEM,
+            render_order=RenderOrder.ITEM,
         )
 
         self.consumable = consumable

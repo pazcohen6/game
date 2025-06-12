@@ -12,7 +12,7 @@ RendrOrder Enum:
         ACTOR:
             Represents the rendering order for actor entities.
 """
-class RendrOrder(Enum):
+class RenderOrder(Enum):
     CORPSE = auto()
     ITEM = auto()
     ACTOR = auto()

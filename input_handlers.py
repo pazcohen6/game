@@ -479,6 +479,7 @@ class AskUserEventHandler(EventHandler):
         By default this returns to the main event handler.
         """
         return MainGameEventHandler(self.engine)
+    
 """
 CaracterScreenEventHandler class:
     Displays detailed information about the player's character in a separate screen.
@@ -516,7 +517,7 @@ class CaracterScreenEventHandler(AskUserEventHandler):
             x = x,
             y = y,
             width = width,
-            height = 7,
+            height = 11,
             title = self.TITLE,
             clear = True,
             fg = (255, 255, 255),
@@ -540,43 +541,56 @@ class CaracterScreenEventHandler(AskUserEventHandler):
         console.print(
             x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
         )
+        console.print(
+            x=x + 1, y=y +6, string=f"Critical Chance: {self.engine.player.fighter.critical_chance}"
+        )
+        console.print(
+            x=x + 1, y=y +7, string=f"---------STATS---------"
+        )
+        console.print(
+            x=x + 1, y=y +8, string=f"Strength: {self.engine.player.fighter.base_strength}"
+        )
+        console.print(
+            x=x + 1, y=y +9, string=f"Agility: {self.engine.player.fighter.base_agility}"
+        )
 
 """
-LevelUpEventHandler class:
-    Handles events when the player levels up, allowing the user to select an attribute to increase.
-    Inherits from AskUserEventHandler.
+LevelUpEventHandler class (inherits from AskUserEventHandler):
+    Handles the player level-up event, providing an interface for the player
+    to choose which attribute to increase upon leveling up.
 
 Attributes:
     TITLE (str):
-        The title displayed at the top of the level-up window.
+        The title displayed at the top of the level-up menu window.
 
 Methods:
     on_render:
-        Renders the level-up interface and options to the console.
+        Renders the level-up screen with options for increasing Strength or Agility.
 
         Parameters:
-            console (Console): The console to render the level-up interface.
+            console (Console): The rendering console.
 
         Return:
             > None
 
     ev_keydown:
-        Handles keydown events to select an attribute to increase.
+        Processes key presses to select an attribute to increase.
+        'a' increases Strength, 'b' increases Agility. Invalid keys show an error message.
 
         Parameters:
-            event (tcod.event.KeyDown): The keydown event.
+            event (tcod.event.KeyDown): The keyboard event.
 
         Return:
-            > Optional[ActionOrHandler]: Returns the result of on_exit() or action based on selected attribute.
+            > Optional[ActionOrHandler]: Returns the result of the parent handler or None for invalid input.
 
     ev_mousebuttondown:
-        Prevents mouse clicks from exiting the menu.
+        Overrides mouse button input to prevent closing the menu with clicks.
 
         Parameters:
-            event (tcod.event.MouseButtonDown): The mouse button down event.
+            event (tcod.event.MouseButtonDown): The mouse event.
 
         Return:
-            > Optional[ActionOrHandler]: Always returns None to prevent exit.
+            > None (always)
 """
 class LevelUpEventHandler(AskUserEventHandler):
     TITLE = "Level Up"
@@ -585,14 +599,14 @@ class LevelUpEventHandler(AskUserEventHandler):
         super().on_render(console)
 
         if self.engine.player.x <= 30 :
-            x = 40
+            x = 27
         else :
             x = 0
         
         console.draw_frame(
             x = x,
             y = 0,
-            width = 35,
+            width = 54,
             height = 8,
             title = self.TITLE,
             clear = True,
@@ -606,17 +620,15 @@ class LevelUpEventHandler(AskUserEventHandler):
         console.print(
             x = x + 1,
             y = 4,
-            string=f"a) Constitution (+20 HP, from {self.engine.player.fighter.max_hp})",
+            string=f"a) Strength (+1 Strength, from {self.engine.player.fighter.base_strength}) — "
+                   f"{'+1 Attack' if self.engine.player.fighter.base_strength % 5 == 4 else '+5 HP'}",
         )
+
         console.print(
             x = x + 1,
             y = 5,
-            string=f"b) Strength (+1 attack, from {self.engine.player.fighter.power})",
-        )
-        console.print(
-            x = x + 1,
-            y = 6,
-            string=f"c) Agility (+1 defense, from {self.engine.player.fighter.defense})",
+            string=f"b) Agility (+1 Agility, from {self.engine.player.fighter.base_agility}) - "
+            f"{'+1 Defence' if self.engine.player.fighter.base_agility % 5 == 4 else '+2 Critical Chance'}",
         )
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
@@ -624,13 +636,11 @@ class LevelUpEventHandler(AskUserEventHandler):
         key = event.sym
         index = key - tcod.event.K_a
 
-        if 0 <= index <= 2:
+        if 0 <= index <= 1:
             if index == 0:
-                player.level.increase_max_hp()
-            elif index == 1:
-                player.level.increase_power()
-            else:
-                player.level.increase_defense()
+                player.level.increase_strength()
+            else :
+                player.level.increase_agility()
         
         else:
             self.engine.message_log.add_message('Invalid entry.', color.invalid)
@@ -643,8 +653,6 @@ class LevelUpEventHandler(AskUserEventHandler):
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         return None
     
-
-
 """
 InventoryEventHandler class:
     Displays the player's inventory and allows selection of items.
@@ -909,24 +917,20 @@ class SelectIndexHandler(AskUserEventHandler):
         raise NotImplementedError()
     
 """
-SingleRangedAttackHandler class:
-    Handles targeting a single enemy with a callback for the action.
+LookHandler class:
+    Allows the player to look around the map using the keyboard without taking actions.
     Inherits from SelectIndexHandler.
-
-Attributes:
-    callback (Callable[[Tuple[int, int]], Optional[Action]]):
-        A callback function to handle the action at the selected tile.
 
 Methods:
     on_index_selected:
-        Executes the callback with the coordinates of the selected tile.
+        Exits look mode and returns control to the main game event handler.
 
         Parameters:
-            x (int): The x coordinate of the selected tile.
-            y (int): The y coordinate of the selected tile.
+            x (int): The x coordinate the player looked at.
+            y (int): The y coordinate the player looked at.
 
         Return:
-            > Optional[Action]: The action returned by the callback.
+            > MainGameEventHandler: Resumes the main game input handler.
 """
 class LookHandler(SelectIndexHandler):
     """Lets the player look around using the keyboard."""

@@ -4,6 +4,8 @@ from typing import Optional, Tuple, TYPE_CHECKING
 import color
 from entity import Actor
 import exceptions
+import random
+import math
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -257,13 +259,18 @@ class ActionWithDirection(Action):
 
 """
 MeleeAction class (inherits from ActionWithDirection):
-    An action that causes the entity to perform a melee attack on a target actor.
+    Represents a melee attack action performed by an entity on a target actor.
 
 Methods:
     perform:
-        Executes the melee attack. If a target is present, calculates the damage
-        based on the entity's power and the target's defense. Logs the attack
-        message and applies damage if any.
+        Executes the melee attack. If a valid target is present, calculates damage 
+        as the attacker's power minus the target's defense. Computes critical hit 
+        chance using attacker and target stats, doubles damage if critical. 
+        Displays an appropriate message with color coding for player/enemy and 
+        critical/hit. Applies damage to the target's HP if damage is positive.
+
+        Raises:
+            Impossible: If there is no target to attack.
 
         Return:
             > None
@@ -275,16 +282,39 @@ class MeleeAction(ActionWithDirection):
             raise exceptions.Impossible("Nothing to attack")
         
         damage = self.entity.fighter.power - target.fighter.defense
+        critical_chance = CalculateCriticalChance(self.entity.fighter.critical_chance, target.fighter.critical_chance)
+        critical = False
 
-        attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
+        roll = random.randint(1,100)
+        if roll >= 100 - critical_chance :
+            damage *= 2
+            critical = True
+        
+        if critical :
+            attack_desc = f"{self.entity.name.capitalize()} critically hits {target.name}"
+        else :    
+            attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
+
         if self.entity is self.engine.player:
-            attack_color = color.player_atk
+            if critical :
+                attack_color = color.player_crit
+            else :
+                attack_color = color.player_atk
         else:
-            attack_color = color.enemy_atk
-        if damage > 0:
-            self.engine.message_log.add_message(
-                f"{attack_desc} for {damage} hit points.", attack_color
-            )
+            if critical :
+                attack_color = color.enemy_crit
+            else :
+                attack_color = color.enemy_atk
+
+        if damage > 0 :
+            if critical:
+                self.engine.message_log.add_message(
+                    f"{attack_desc} for {damage} hit points.", attack_color
+                )
+            else:
+                self.engine.message_log.add_message(
+                    f"{attack_desc} for {damage} hit points.", attack_color
+                )
             target.fighter.hp -= damage
         else:
             self.engine.message_log.add_message(
@@ -341,3 +371,21 @@ class BumpAction(ActionWithDirection):
         
         else:
             return MovementAction(self.entity ,self.dx, self.dy).perform()
+
+"""
+Calculate the critical hit chance based on the difference between
+attacker and defender critical chance stats using a sigmoid curve.
+
+Args:
+    attacker_chance (int): The attacker's critical chance stat.
+    defender_chance (int): The target's critical chance stat.
+
+Returns:
+    int: The critical hit chance as a percentage (0-100).
+"""
+def CalculateCriticalChance(self_chance, target_chance) -> int:
+    cc = self_chance - target_chance
+
+    critical_chance = 100 / (1 + math.exp(-0.03 * (cc - 55)))
+
+    return math.ceil(critical_chance)

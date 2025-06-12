@@ -10,8 +10,8 @@ if TYPE_CHECKING:
 """
 Level class:
     A component that tracks the experience and level progression of an entity,
-    such as the player. It handles level-ups, stat increases, and experience
-    points (XP).
+    such as the player. It handles leveling up, stat increases, and experience
+    point (XP) management.
 
 Attributes:
     parent (Actor):
@@ -21,67 +21,68 @@ Attributes:
     current_xp (int):
         The current experience points of the entity.
     level_up_base (int):
-        The base amount of experience points required for a level-up.
+        The base amount of experience required for the first level-up.
     level_up_factor (int):
-        The scaling factor applied to the experience requirement for each level.
+        The scaling factor applied to the XP requirement for each subsequent level.
     xp_given (int):
-        The amount of experience points this entity gives when defeated.
+        The amount of XP this entity gives when defeated.
+
+Properties:
+    experience_to_next_level:
+        Calculates the amount of XP required to reach the next level.
+
+        Returns:
+            > int: The XP required to reach the next level.
+
+    requires_level_up:
+        Checks if the entity has enough XP to level up.
+
+        Returns:
+            > bool: True if the entity is ready to level up, otherwise False.
 
 Methods:
-    experience_to_next_level (property):
-        Calculates the amount of experience points needed to reach the next level.
-
-        Return:
-            > int: The experience points needed for the next level.
-
-    requires_level_up (property):
-        Checks if the entity has enough experience to level up.
-
-        Return:
-            > bool: True if the entity needs to level up, otherwise False.
-
     add_xp:
-        Adds experience points to the entity. If the entity has enough XP to level
-        up, it triggers the level-up process.
+        Adds experience points to the entity. If enough XP is gained,
+        it announces the level-up.
 
-        Input:
-            > xp (int): The amount of experience to add.
+        Parameters:
+            xp (int): The amount of XP to add.
 
-        Return:
+        Returns:
             > None
 
     increase_level:
-        Increases the entity's level and resets the experience needed for the next level.
+        Increases the entity's level and reduces the XP accordingly.
 
-        Return:
+        Returns:
+            > None
+
+    increase_strength:
+        Increases the entity's strength. May also increase max HP if the new
+        agility value does not divide evenly by 5.
+
+        Parameters:
+            amount (int, optional): The amount to increase strength by. Default is 1.
+
+        Returns:
+            > None
+
+    increase_agility:
+        Increases the entity's agility. Triggers different messages based on thresholds.
+
+        Parameters:
+            amount (int, optional): The amount to increase agility by. Default is 1.
+
+        Returns:
             > None
 
     increase_max_hp:
-        Increases the entity's maximum health points and heals the entity by the
-        same amount. Advances the level.
+        Increases the entity's maximum HP and heals it by the same amount.
 
-        Input:
-            > amount (int, optional): The amount by which to increase max HP. Default is 20.
+        Parameters:
+            amount (int, optional): The amount to increase max HP by. Default is 5.
 
-        Return:
-            > None
-
-    increase_power:
-        Increases the entity's power (attack) stat. Advances the level.
-
-        Input:
-            > amount (int, optional): The amount by which to increase power. Default is 1.
-
-        Return:
-            > None
-
-    increase_defense:
-        Increases the entity's defense stat. Advances the level.
-
-        Input:
-            > amount (int, optional): The amount by which to increase defense. Default is 1.
-
-        Return:
+        Returns:
             > None
 """
 class Level(BaseComponent):
@@ -126,24 +127,27 @@ class Level(BaseComponent):
 
         self.current_level += 1
 
-    def increase_max_hp(self, amount: int  = 20) -> None:
+    def increase_strength(self, amount: int = 1) -> None:
+        self.parent.fighter.base_strength += amount
+        
+        if self.parent.fighter.base_strength % 5 != 0 :
+            self.increase_max_hp()
+        else :
+            self.engine.message_log.add_message('You feel stronger!')
+        self.increase_level()
+
+    def increase_agility(self, amount: int = 1) -> None:
+        self.parent.fighter.base_agility += amount
+        
+        if self.parent.fighter.base_agility % 5 != 0 :
+            self.engine.message_log.add_message('You feel a deadly precision rising within you!')
+        else :
+            self.engine.message_log.add_message('Your skin is getting thicker!') 
+        self.increase_level()
+
+    def increase_max_hp(self, amount: int  = 5) -> None:
         self.parent.fighter.max_hp += amount
         self.parent.fighter.hp += amount
 
         self.engine.message_log.add_message('Your health improves!')
-
-        self.increase_level()
-    
-    def increase_power(self, amount: int = 1) -> None:
-        self.parent.fighter.base_power += amount
-
-        self.engine.message_log.add_message('You feel stronger!')
-
-        self.increase_level()
-
-    def increase_defense(self, amount: int = 1) -> None:
-        self.parent.fighter.base_defense += amount
-
-        self.engine.message_log.add_message('Your skin getting thicker!')
-
         self.increase_level()

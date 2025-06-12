@@ -36,3 +36,21 @@ use stairs : = or u
 changes :
  - Fireblall -> Firecube : euclidean distance [sqr(x^2 + y^2)] -> L1 [|x| + |y|]
  - Random tile deviation for floor tile
+
+12/06/2025
+- New Feature:
+    - Critical Chance System Overhaul:
+    	- All creatures (players and enemies) now have a critical chance stat.
+		- During damage calculation (based on sigmuid function):
+			The effective critical chance is calculated using a sigmoid-based function:
+				cc = attacker_crit−target_crit
+				critical_chance =  100 / (1 + math.exp(-0.03 * (cc - 55))) 
+			if the roll >= 100 - critica_chance, the attack is a critical hit.
+			Critical hit deals double damage.
+
+- Stat Changes:
+    - Strength now adds +5 HP per point. Every 5 points in Strength also grant +1 Attack Damage.
+    - Agility now adds +2 Critical Chance per point. Every 5 points in Agility also grant +1 Defense.
+
+- Balance Changes:
+	- Health Potion : now heal 6 HP insted of 4.

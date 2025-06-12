@@ -101,7 +101,7 @@ class Engine:
     def render(self, console: Console) -> None:
         self.game_map.render(console)
 
-        self.message_log.render(console=console, x= 21, y= 53, width= 50 ,height= 5)
+        self.message_log.render(console=console, x= 21, y= 55, width= 50 ,height= 5)
         render_functions.render_bar(
             console= console,
             current_value= self.player.fighter.hp,
@@ -118,7 +118,7 @@ class Engine:
         render_functions.render_names_at_mouse_location(
             console = console,
             x = 21,
-            y = 52,
+            y = 53,
             engine = self
         )
 
